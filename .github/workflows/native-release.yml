@@ -84,6 +84,19 @@ jobs:
         with:
           bun-version: 1.4.2
 
+      - name: Cache Linux build dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            ~/.cargo/registry
+            ~/.cargo/git
+            app/target
+            exact/target
+          key: ${{ runner.os }}-linux-native-${{ hashFiles('app/**/Cargo.lock', 'exact/**/Cargo.lock', 'exact/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-linux-native-
+
       - name: Install Exact dependencies
         working-directory: exact
         run: bun install --frozen-lockfile
@@ -138,6 +151,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+          cache: gradle
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -157,6 +171,19 @@ jobs:
 
       - name: Install Android Rust target
         run: rustup target add aarch64-linux-android --toolchain 1.97.0
+
+      - name: Cache Android build dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            ~/.cargo/registry
+            ~/.cargo/git
+            app/target
+            exact/target
+          key: ${{ runner.os }}-android-native-${{ hashFiles('app/**/Cargo.lock', 'exact/**/Cargo.lock', 'exact/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-android-native-
 
       - name: Build Android APK
         working-directory: exact
