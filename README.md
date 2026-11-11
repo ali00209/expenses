@@ -60,3 +60,20 @@ bun ../exact/scripts/agent.mjs android --app expenses --test "$PWD/app.test.cont
 
 The Linux and Android commands require the platform toolchains described in
 Exact's setup documentation.
+
+## GitHub Actions
+
+`.github/workflows/ci.yml` runs Contract validation, the web test, and a web
+build on pull requests and pushes to `main`. Pushes to `main` deploy the web
+build to GitHub Pages; enable Pages for the repository with **GitHub Actions**
+as its build source.
+
+Push a version tag to build native release artifacts:
+
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The workflow publishes the Linux host archive and Android APK to the resulting
+GitHub Release.

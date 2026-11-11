@@ -11,12 +11,14 @@
   },
   "host": {
     "web": {},
-    "linux": {}
+    "linux": {},
+    "android": {}
   },
   "deploy": {
     "store": {
       "web": "0",
-      "linux": "0"
+      "linux": "0",
+      "android": "0"
     }
   }
 }

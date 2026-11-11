@@ -1,0 +1,199 @@
+name: Build and publish
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: Test and build web
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out app
+        uses: actions/checkout@v4
+
+      - name: Check out Exact
+        uses: actions/checkout@v4
+        with:
+          repository: expo/exact
+          path: exact
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install Exact dependencies
+        working-directory: exact
+        run: bun install --frozen-lockfile
+
+      - name: Prepare Exact toolchain
+        working-directory: exact
+        run: bun scripts/exact.mjs setup
+
+      - name: Validate Contract
+        run: |
+          bun exact.mjs contract types app.contract -o app.contract.d.ts
+          bun exact.mjs contract build app.contract --json --errors-only
+
+      - name: Run web Contract test
+        run: bun exact.mjs test web app.test.contract
+
+      - name: Build web
+        run: bun exact.mjs web-build --out dist
+
+      - name: Configure Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy-pages:
+    name: Deploy web to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: web
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  linux:
+    name: Build Linux release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out app
+        uses: actions/checkout@v4
+
+      - name: Check out Exact
+        uses: actions/checkout@v4
+        with:
+          repository: expo/exact
+          path: exact
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Install Exact dependencies
+        working-directory: exact
+        run: bun install --frozen-lockfile
+
+      - name: Prepare Exact toolchain
+        working-directory: exact
+        run: bun scripts/exact.mjs setup
+
+      - name: Build Linux host
+        run: bun exact.mjs linux
+
+      - name: Package Linux artifact
+        run: |
+          mkdir -p release
+          find target/host-dev -maxdepth 1 -type f -executable -name '*-linux' -print -exec cp {} release/ \;
+          find target/host-dev -maxdepth 1 -type f -name '*.desktop' -print -exec cp {} release/ \;
+          test -n "$(find release -type f -name '*-linux' -print -quit)"
+          tar -czf "release/expenses-linux-${GITHUB_REF_NAME}.tar.gz" -C release .
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: expenses-linux
+          path: release/expenses-linux-*.tar.gz
+
+  android:
+    name: Build Android release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out app
+        uses: actions/checkout@v4
+
+      - name: Check out Exact
+        uses: actions/checkout@v4
+        with:
+          repository: expo/exact
+          path: exact
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK
+        run: yes | sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.1.12297006"
+
+      - name: Install Exact dependencies
+        working-directory: exact
+        run: bun install --frozen-lockfile
+
+      - name: Prepare Exact toolchain
+        working-directory: exact
+        run: bun scripts/exact.mjs setup
+
+      - name: Install Android Rust target
+        run: rustup target add aarch64-linux-android --toolchain 1.97.0
+
+      - name: Build Android APK
+        working-directory: exact
+        env:
+          EXACT_APP_DIR: ${{ github.workspace }}
+        run: bun scripts/agent-android.mjs build expenses --apk
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: expenses-android
+          path: target/android/app/build/outputs/apk/release/app-release.apk
+
+  release:
+    name: Publish native release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, android]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: expenses-linux
+          path: release
+
+      - name: Download Android artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: expenses-android
+          path: release
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: release/*
