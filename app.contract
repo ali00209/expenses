@@ -15,6 +15,11 @@ shape Time
   epochAtZero: number
   utcOffset: number
 
+routes nav
+  home "/"
+    add "/add"
+    edit "/edit"
+
 component Expenses
   state title = ""
   state amount = ""
@@ -62,6 +67,7 @@ component Expenses
       title = ""
       amount = ""
       date = ""
+      nav = back(nav)
   action toggleSelected(id: string, checked: bool)
     selected = checked ? selected.concat([id]) : selected.filter((item) => item != id)
   action selectAll
@@ -98,6 +104,14 @@ component Expenses
     editTitle = value
     editAmount = valueAmount
     editDate = valueDate
+    nav = push(nav, "/edit")
+  action openAdd
+    title = ""
+    amount = ""
+    date = ""
+    nav = push(nav, "/add")
+  action closeForm
+    nav = back(nav)
   action setEditTitle(value: string)
     editTitle = value
   action setEditAmount(value: string)
@@ -110,74 +124,86 @@ component Expenses
     if editingId != "" and editTitle.trim() != "" and editAmount.trim() != ""
       send changed = updateExpense(editingId, editTitle.trim(), editAmount.trim(), editDate)
       editingId = ""
+      nav = back(nav)
 
   view
-    column flex=1 min-height=0
-      list id="expenses" appearance="auto" listStyle="inset-grouped" flex=1 min-height=0 testId="root"
-        section
-          header
-            text "Expenses" role="heading" aria-level=1
-          row
-            button popovertarget="more-menu" aria-label="More options" testId="more"
-              text "More"
-          column gap=8
-            input value=title input=setTitle submit=add placeholder="Expense title" aria-label="Expense title" testId="title" flex=1 min-width=0
-            input type="number" inputmode="decimal" value=amount input=setAmount submit=add min=0 step=0.01 placeholder="Amount" aria-label="Expense amount" testId="amount" flex=1 min-width=0
+    main id="app" navigationKey=`${top(nav).id}` navigationBack="closeForm" width="100%" height="100%" flex=1 min-height=0 testId="root"
+      for e in stack(nav) key=e.id
+        if e.name == "home"
+          column navigationKey=`${e.id}` position="absolute" inset=0 width="100%" height="100%" flex=1 min-height=0
+            list id="expenses" appearance="auto" listStyle="inset-grouped" flex=1 min-height=0
+              section
+                header
+                  text "Expenses" role="heading" aria-level=1
+                row
+                  button popovertarget="more-menu" aria-label="More options" testId="more"
+                    text "More"
+              section
+                column padding=16 gap=8 background-color="-exact-secondary-background" border-radius=12 testId="summary"
+                  row
+                    column flex=1
+                      text "Total expenses"
+                      text `PKR ${formatNumber(summary.total, "decimal")}` role="heading" aria-level=2 testId="total"
+                    column
+                      text "Expenses"
+                      text `${summary.count}` role="heading" aria-level=2 testId="count"
+                row gap=8
+                  text "Show"
+                  select value=filter change=setFilter aria-label="Filter expenses by date" testId="filter"
+                    option "All dates" value="all"
+                    option "Today" value="today"
+                    option "This week" value="week"
+                    option "This month" value="month"
+                    option "Custom range" value="custom"
+                if filter == "custom"
+                  row gap=8
+                    input type="date" value=customStart change=setCustomStart aria-label="Filter start date" testId="filter-start"
+                    input type="date" value=customEnd change=setCustomEnd aria-label="Filter end date" testId="filter-end"
+              section
+                for expense in visibleExpenses key=expense.id
+                  row testId=`expense-${expense.id}` gap=8
+                    input type="checkbox" checked=selected.includes(expense.id) change=toggleSelected(expense.id) aria-label=`Select ${expense.title}` testId=`select-${expense.id}`
+                    column flex=1 min-width=0
+                      text expense.title testId=`title-${expense.id}`
+                      text `PKR ${formatNumber(expense.amount, "decimal")} · ${expense.date}` testId=`details-${expense.id}`
+                    button press=beginEdit(expense.id, expense.title, expense.amount.toString(), expense.date) testId=`edit-${expense.id}`
+                      text "Edit"
+                    button press=removeOne(expense.id) destructive=true testId=`remove-${expense.id}`
+                      text "Delete"
+            button press=openAdd aria-label="Add expense" buttonStyle="filled" position="absolute" right=20 bottom=20 testId="open-add"
+              text "+"
+
+            column id="more-menu" popover="auto" role="menu" aria-label="More options"
+              button press=selectAll popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(expenses.length == 0) testId="select-all"
+                text "Select all"
+              button press=deleteSelected popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(selected.length == 0) testId="delete-selected"
+                text "Delete selected"
+              button press=deleteAll popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(expenses.length == 0) testId="delete-all"
+                text "Delete all"
+        if e.name == "add"
+          column navigationKey=`${e.id}` navigationPresentation="modal" navigationDetent="fit-content large" position="absolute" inset=0 background-color="-exact-background" padding=20 gap=12 testId="expense-form"
+            header
+              text "Add expense" role="heading" aria-level=2 flex=1
+            input value=title input=setTitle placeholder="Expense title" aria-label="Expense title" testId="title"
+            input type="number" inputmode="decimal" value=amount input=setAmount min=0 step=0.01 placeholder="Amount" aria-label="Expense amount" testId="amount"
             input type="date" value=(date == "" ? currentDate : date) change=setDate aria-label="Expense date" testId="date"
-            button press=add disabled=(title.trim() == "" or amount.trim() == "") buttonStyle="filled" testId="add"
-              text "Add expense"
-        section
-          column padding=16 gap=8 background-color="-exact-secondary-background" border-radius=12 testId="summary"
-            row
-              column flex=1
-                text "Total expenses"
-                text `PKR ${formatNumber(summary.total, "decimal")}` role="heading" aria-level=2 testId="total"
-              column
-                text "Expenses"
-                text `${summary.count}` role="heading" aria-level=2 testId="count"
-          row gap=8
-            text "Show"
-            select value=filter change=setFilter aria-label="Filter expenses by date" testId="filter"
-              option "All dates" value="all"
-              option "Today" value="today"
-              option "This week" value="week"
-              option "This month" value="month"
-              option "Custom range" value="custom"
-          if filter == "custom"
             row gap=8
-              input type="date" value=customStart change=setCustomStart aria-label="Filter start date" testId="filter-start"
-              input type="date" value=customEnd change=setCustomEnd aria-label="Filter end date" testId="filter-end"
-        section
-          for expense in visibleExpenses key=expense.id
-            row testId=`expense-${expense.id}` gap=8
-              input type="checkbox" checked=selected.includes(expense.id) change=toggleSelected(expense.id) aria-label=`Select ${expense.title}` testId=`select-${expense.id}`
-              column flex=1 min-width=0
-                text expense.title testId=`title-${expense.id}`
-                text `PKR ${formatNumber(expense.amount, "decimal")} · ${expense.date}` testId=`details-${expense.id}`
-              button press=beginEdit(expense.id, expense.title, expense.amount.toString(), expense.date) testId=`edit-${expense.id}`
-                text "Edit"
-              button press=removeOne(expense.id) destructive=true testId=`remove-${expense.id}`
-                text "Delete"
-
-      column id="more-menu" popover="auto" role="menu" aria-label="More options"
-        button press=selectAll popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(expenses.length == 0) testId="select-all"
-          text "Select all"
-        button press=deleteSelected popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(selected.length == 0) testId="delete-selected"
-          text "Delete selected"
-        button press=deleteAll popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(expenses.length == 0) testId="delete-all"
-          text "Delete all"
-
-      if editingId != ""
-        column id="edit-form" padding=16 gap=8
-          text "Edit expense" role="heading" aria-level=2
-          input value=editTitle input=setEditTitle aria-label="Edit expense title" testId="edit-title"
-          input type="number" inputmode="decimal" value=editAmount input=setEditAmount min=0 step=0.01 aria-label="Edit expense amount" testId="edit-amount"
-          input type="date" value=editDate change=setEditDate aria-label="Edit expense date" testId="edit-date"
-          row gap=8
-            button press=cancelEdit testId="cancel-edit"
-              text "Cancel"
-            button press=saveEdit disabled=(editTitle.trim() == "" or editAmount.trim() == "") buttonStyle="filled" testId="save-edit"
-              text "Save"
+              button press=closeForm testId="cancel-add"
+                text "Cancel"
+              button press=add disabled=(title.trim() == "" or amount.trim() == "") buttonStyle="filled" testId="add"
+                text "Add expense"
+        if e.name == "edit"
+          column navigationKey=`${e.id}` navigationPresentation="modal" navigationDetent="fit-content large" position="absolute" inset=0 background-color="-exact-background" padding=20 gap=12 testId="expense-form"
+            header
+              text "Edit expense" role="heading" aria-level=2 flex=1
+            input value=editTitle input=setEditTitle placeholder="Expense title" aria-label="Edit expense title" testId="edit-title"
+            input type="number" inputmode="decimal" value=editAmount input=setEditAmount min=0 step=0.01 placeholder="Amount" aria-label="Edit expense amount" testId="edit-amount"
+            input type="date" value=editDate change=setEditDate aria-label="Edit expense date" testId="edit-date"
+            row gap=8
+              button press=closeForm testId="cancel-edit"
+                text "Cancel"
+              button press=saveEdit disabled=(editTitle.trim() == "" or editAmount.trim() == "") buttonStyle="filled" testId="save-edit"
+                text "Save"
 
       if toast != ""
         row id="toast" position="absolute" bottom=16 left=16 right=16 padding=12 gap=12 background-color="-exact-secondary-grouped-background" border-radius=8 testId="toast"

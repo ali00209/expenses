@@ -253,10 +253,16 @@ type T2 = { "id": T0; "title": T0; "amount": T1; "date": T0; };
 type T3 = { "count": T1; };
 type T4 = { "total": T1; "count": T1; };
 type T5 = { "epochAtZero": T1; "utcOffset": T1; };
-type T6 = T0[];
-type T7 = T2[];
-type T8 = T3 | null;
-type T9 = boolean;
+type T6 = { };
+type T7 = { "id": T1; "name": T0; "url": T0; "tab": T0; "params": T6; "fragment": T0; };
+type T8 = T7[];
+type T9 = { "name": T0; "stack": T8; };
+type T10 = T9[];
+type T11 = { "tab": T0; "tabs": T10; "next": T1; };
+type T12 = T0[];
+type T13 = T2[];
+type T14 = T3 | null;
+type T15 = boolean;
 
 /** Sources called by compiled mutation sends. */
 export type MutationSource = "addExpense" | "removeAll" | "removeExpenses" | "undoDelete" | "updateExpense";
@@ -264,9 +270,9 @@ export type MutationSource = "addExpense" | "removeAll" | "removeExpenses" | "un
 export interface SourceMap {
   "addExpense": { args: [T0, T0, T0]; result: T3 };
   "expenseSummary": { args: [T0, T0]; result: T4 };
-  "expenses": { args: []; result: T7 };
+  "expenses": { args: []; result: T13 };
   "removeAll": { args: []; result: T3 };
-  "removeExpenses": { args: [T6]; result: T3 };
+  "removeExpenses": { args: [T12]; result: T3 };
   "undoDelete": { args: []; result: T3 };
   "updateExpense": { args: [T0, T0, T0, T0]; result: T3 };
 }
