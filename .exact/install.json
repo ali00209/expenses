@@ -1,0 +1,32 @@
+{
+  "exactInstall": 1,
+  "app": {
+    "name": "Expenses"
+  },
+  "build": {
+    "id": "1a2d017d4f0ab42d44fa72a679789ff2122ef78f0c8db8d0bcc06445fb51234d",
+    "source": null,
+    "dirty": null,
+    "builtAt": "2026-11-11T15:39:14.380Z",
+    "mode": "Release build"
+  },
+  "platforms": {
+    "web": {
+      "methods": [
+        {
+          "kind": "browser",
+          "url": "/",
+          "recommended": false,
+          "label": "Open in browser"
+        }
+      ]
+    },
+    "ios": {
+      "methods": []
+    },
+    "macos": {
+      "methods": []
+    }
+  },
+  "reach": null
+}

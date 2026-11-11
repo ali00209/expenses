@@ -1,0 +1,8 @@
+{
+  "name": "Expenses",
+  "short_name": "Expenses",
+  "id": "com.example.expenses-4155c7",
+  "start_url": "/",
+  "display": "standalone",
+  "lang": "en"
+}
