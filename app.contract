@@ -1,36 +1,142 @@
 shape Expense
   id: string
-  description: string
+  title: string
+  amount: number
+  date: string
 
 shape Change
   count: number
 
-component Expenses
-  state draft = ""
-  resource expenses = expenses() as shape Expense[]
-  mutation changed as shape Change refreshes expenses
+shape Time
+  epochAtZero: number
+  utcOffset: number
 
-  action edit(value: string)
-    draft = value
+component Expenses
+  state title = ""
+  state amount = ""
+  state date = ""
+  state selected = []
+  state editingId = ""
+  state editTitle = ""
+  state editAmount = ""
+  state editDate = ""
+  state toast = ""
+  state toastUntil = 0
+  resource expenses = expenses() as shape Expense[]
+  resource time = exactTime() as shape Time
+  mutation changed as shape Change refreshes expenses
+  derive currentDate = formatDate(time.epochAtZero + performanceNow(), time.utcOffset, "iso")
+
+  action setTitle(value: string)
+    title = value
+  action setAmount(value: string)
+    amount = value
+  action setDate(value: string)
+    date = value
   action add
-    if draft.trim() != ""
-      send changed = addExpense(draft.trim())
-      draft = ""
-  action remove(id: string)
-    send changed = removeExpense(id)
+    if title.trim() != "" and amount.trim() != ""
+      send changed = addExpense(title.trim(), amount.trim(), date == "" ? currentDate : date)
+      title = ""
+      amount = ""
+      date = ""
+  action toggleSelected(id: string, checked: bool)
+    selected = checked ? selected.concat([id]) : selected.filter((item) => item != id)
+  action selectAll
+    selected = expenses.map((expense) => expense.id)
+  action removeOne(id: string)
+    send changed = removeExpenses([id])
+    selected = selected.filter((item) => item != id)
+    toast = "Expense deleted"
+    toastUntil = performanceNow() + 5000
+  action deleteSelected
+    if selected.length > 0
+      send changed = removeExpenses(selected)
+      toast = `${selected.length} ${selected.length == 1 ? "expense" : "expenses"} deleted`
+      toastUntil = performanceNow() + 5000
+      selected = []
+  action deleteAll
+    if expenses.length > 0
+      send changed = removeAll()
+      toast = `${expenses.length} ${expenses.length == 1 ? "expense" : "expenses"} deleted`
+      toastUntil = performanceNow() + 5000
+      selected = []
+  action undo
+    send changed = undoDelete()
+    toast = ""
+    toastUntil = 0
+  action clearToast
+    toast = ""
+    toastUntil = 0
+  task hideToast when toast != "" key=toastUntil
+    after(5000, clearToast)
+
+  action beginEdit(id: string, value: string, valueAmount: string, valueDate: string)
+    editingId = id
+    editTitle = value
+    editAmount = valueAmount
+    editDate = valueDate
+  action setEditTitle(value: string)
+    editTitle = value
+  action setEditAmount(value: string)
+    editAmount = value
+  action setEditDate(value: string)
+    editDate = value
+  action cancelEdit
+    editingId = ""
+  action saveEdit
+    if editingId != "" and editTitle.trim() != "" and editAmount.trim() != ""
+      send changed = updateExpense(editingId, editTitle.trim(), editAmount.trim(), editDate)
+      editingId = ""
 
   view
-    list id="expenses" appearance="auto" listStyle="inset-grouped" flex=1 min-height=0 testId="root"
-      section
-        header
-          text "Expenses" role="heading" aria-level=1
-        row gap=8
-          input value=draft input=edit submit=add placeholder="Add an expense" aria-label="New expense" testId="new-expense" flex=1 min-width=0
-          button press=add disabled=(draft.trim() == "") buttonStyle="filled" testId="add"
-            text "Add"
-      section
-        for expense in expenses key=expense.id
-          row testId=`expense-${expense.id}` delete=remove(expense.id)
-            text expense.description flex=1 testId=`description-${expense.id}`
-            button press=remove(expense.id) destructive=true testId=`remove-${expense.id}`
-              text "Delete"
+    column flex=1 min-height=0
+      list id="expenses" appearance="auto" listStyle="inset-grouped" flex=1 min-height=0 testId="root"
+        section
+          header
+            text "Expenses" role="heading" aria-level=1
+          row
+            button popovertarget="more-menu" aria-label="More options" testId="more"
+              text "More"
+          column gap=8
+            input value=title input=setTitle submit=add placeholder="Expense title" aria-label="Expense title" testId="title" flex=1 min-width=0
+            input type="number" inputmode="decimal" value=amount input=setAmount submit=add min=0 step=0.01 placeholder="Amount" aria-label="Expense amount" testId="amount" flex=1 min-width=0
+            input type="date" value=(date == "" ? currentDate : date) change=setDate aria-label="Expense date" testId="date"
+            button press=add disabled=(title.trim() == "" or amount.trim() == "") buttonStyle="filled" testId="add"
+              text "Add expense"
+        section
+          for expense in expenses key=expense.id
+            row testId=`expense-${expense.id}` gap=8
+              input type="checkbox" checked=selected.includes(expense.id) change=toggleSelected(expense.id) aria-label=`Select ${expense.title}` testId=`select-${expense.id}`
+              column flex=1 min-width=0
+                text expense.title testId=`title-${expense.id}`
+                text `PKR ${formatNumber(expense.amount, "decimal")} · ${expense.date}` testId=`details-${expense.id}`
+              button press=beginEdit(expense.id, expense.title, expense.amount.toString(), expense.date) testId=`edit-${expense.id}`
+                text "Edit"
+              button press=removeOne(expense.id) destructive=true testId=`remove-${expense.id}`
+                text "Delete"
+
+      column id="more-menu" popover="auto" role="menu" aria-label="More options"
+        button press=selectAll popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(expenses.length == 0) testId="select-all"
+          text "Select all"
+        button press=deleteSelected popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(selected.length == 0) testId="delete-selected"
+          text "Delete selected"
+        button press=deleteAll popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(expenses.length == 0) testId="delete-all"
+          text "Delete all"
+
+      if editingId != ""
+        column id="edit-form" padding=16 gap=8
+          text "Edit expense" role="heading" aria-level=2
+          input value=editTitle input=setEditTitle aria-label="Edit expense title" testId="edit-title"
+          input type="number" inputmode="decimal" value=editAmount input=setEditAmount min=0 step=0.01 aria-label="Edit expense amount" testId="edit-amount"
+          input type="date" value=editDate change=setEditDate aria-label="Edit expense date" testId="edit-date"
+          row gap=8
+            button press=cancelEdit testId="cancel-edit"
+              text "Cancel"
+            button press=saveEdit disabled=(editTitle.trim() == "" or editAmount.trim() == "") buttonStyle="filled" testId="save-edit"
+              text "Save"
+
+      if toast != ""
+        row id="toast" position="absolute" bottom=16 left=16 right=16 padding=12 gap=12 background-color="-exact-secondary-grouped-background" border-radius=8 testId="toast"
+          text toast color="-exact-label" flex=1
+          button press=undo testId="undo"
+            text "Undo"

@@ -4,11 +4,14 @@
 // What app.ts writes, in brief (the declarations follow): `sources: Sources` has one
 // function per source, given its arguments as an array (then store, storage, native) and
 // answering its shape, or a Promise of it.
-//   addExpense: (args: [string]) => Change
+//   addExpense: (args: [string, string, string]) => Change
 //   expenses: (args: []) => Expense[]
-//   removeExpense: (args: [string]) => Change
+//   removeAll: (args: []) => Change
+//   removeExpenses: (args: [string[]]) => Change
+//   undoDelete: (args: []) => Change
+//   updateExpense: (args: [string, string, string, string]) => Change
 // The shapes. None is exported: name one by its source, `type Change = Result<'addExpense'>`.
-//   Expense = { id: string; description: string }
+//   Expense = { id: string; title: string; amount: number; date: string }
 //   Change = { count: number }
 
 /** Storage capabilities supplied by the host. Import these types; there are
@@ -243,19 +246,25 @@ export interface Statement {
 }
 
 type T0 = string;
-type T1 = { "id": T0; "description": T0; };
-type T2 = number;
-type T3 = { "count": T2; };
-type T4 = T1[];
-type T5 = T3 | null;
+type T1 = number;
+type T2 = { "id": T0; "title": T0; "amount": T1; "date": T0; };
+type T3 = { "count": T1; };
+type T4 = { "epochAtZero": T1; "utcOffset": T1; };
+type T5 = T0[];
+type T6 = T2[];
+type T7 = T3 | null;
+type T8 = boolean;
 
 /** Sources called by compiled mutation sends. */
-export type MutationSource = "addExpense" | "removeExpense";
+export type MutationSource = "addExpense" | "removeAll" | "removeExpenses" | "undoDelete" | "updateExpense";
 
 export interface SourceMap {
-  "addExpense": { args: [T0]; result: T3 };
-  "expenses": { args: []; result: T4 };
-  "removeExpense": { args: [T0]; result: T3 };
+  "addExpense": { args: [T0, T0, T0]; result: T3 };
+  "expenses": { args: []; result: T6 };
+  "removeAll": { args: []; result: T3 };
+  "removeExpenses": { args: [T5]; result: T3 };
+  "undoDelete": { args: []; result: T3 };
+  "updateExpense": { args: [T0, T0, T0, T0]; result: T3 };
 }
 
 export type Source = keyof SourceMap;
