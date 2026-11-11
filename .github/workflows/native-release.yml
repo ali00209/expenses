@@ -165,7 +165,7 @@ jobs:
         run: bun scripts/agent-android.mjs build expenses --apk
 
       - name: Rename Android artifact
-        run: mv app/target/android/app/build/outputs/apk/release/app-release.apk "app/expenses-android-v${{ needs.version.outputs.version }}.apk"
+        run: mv app/target/android/app/outputs/apk/release/app-release.apk "app/expenses-android-v${{ needs.version.outputs.version }}.apk"
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
