@@ -58,6 +58,13 @@ jobs:
         working-directory: app
         run: bun exact.mjs web-build --out dist
 
+      - name: Set GitHub Pages project path
+        working-directory: app
+        run: |
+          site_prefix="/${GITHUB_REPOSITORY#*/}/"
+          find dist -type f -name '*.html' -exec sed -i "s#<base href=\"/\">#<base href=\"${site_prefix}\">#g" {} +
+          sed -i "s#\"start_url\": \"/\"#\"start_url\": \"${site_prefix}\"#g" dist/manifest.json
+
       - name: Configure Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v5
