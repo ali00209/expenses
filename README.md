@@ -65,8 +65,8 @@ Exact's setup documentation.
 
 `.github/workflows/ci.yml` runs Contract validation, the web test, and a web
 build on pull requests and pushes to `main`. Pushes to `main` deploy the web
-build to the `gh-pages` branch. In the repository's **Settings → Pages**, select
-**Deploy from a branch**, choose `gh-pages`, and choose `/ (root)` once.
+build to GitHub Pages. In the repository's **Settings → Pages**, select
+**GitHub Actions** as the source.
 
 Push a version tag to build native release artifacts:
 
