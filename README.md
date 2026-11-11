@@ -68,12 +68,8 @@ build on pull requests and pushes to `main`. Pushes to `main` deploy the web
 build to GitHub Pages. In the repository's **Settings → Pages**, select
 **GitHub Actions** as the source.
 
-Push a version tag to build native release artifacts:
-
-```sh
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-The workflow publishes the Linux host archive and Android APK to the resulting
-GitHub Release.
+To build native release artifacts, open **Actions → Native release → Run
+workflow**, select a version increment (`patch`, `minor`, or `major`), and run
+the workflow. It calculates the next semantic version from the existing `v*`
+tags, builds the Linux host archive and Android APK, and publishes both to a
+new GitHub Release.
