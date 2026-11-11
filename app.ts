@@ -3,12 +3,22 @@ import type { Answer, Result, Sources } from './app.contract.d.ts';
 export const grants = '';
 
 type Expense = { id: string; title: string; amount: number; date: string };
+type Summary = { total: number; count: number };
 let expenses: Expense[] = [];
 let next = 1;
 let lastDeleted: Expense[] = [];
 
 const sources: Sources = {
   expenses: (): Expense[] => expenses,
+  expenseSummary: ([start, end]): Summary => {
+    const visible = expenses.filter(
+      (expense) => (!start || expense.date >= start) && (!end || expense.date <= end),
+    );
+    return {
+      total: visible.reduce((sum, expense) => sum + expense.amount, 0),
+      count: visible.length,
+    };
+  },
   addExpense: ([title, amount, date]): Result<'addExpense'> => {
     const parsedAmount = Number(amount);
     if (!title || !date || !Number.isFinite(parsedAmount) || parsedAmount < 0) {

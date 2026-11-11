@@ -5,6 +5,7 @@
 // function per source, given its arguments as an array (then store, storage, native) and
 // answering its shape, or a Promise of it.
 //   addExpense: (args: [string, string, string]) => Change
+//   expenseSummary: (args: [string, string]) => Summary
 //   expenses: (args: []) => Expense[]
 //   removeAll: (args: []) => Change
 //   removeExpenses: (args: [string[]]) => Change
@@ -13,6 +14,7 @@
 // The shapes. None is exported: name one by its source, `type Change = Result<'addExpense'>`.
 //   Expense = { id: string; title: string; amount: number; date: string }
 //   Change = { count: number }
+//   Summary = { total: number; count: number }
 
 /** Storage capabilities supplied by the host. Import these types; there are
  * no ambient fs/sqlite globals and importing a type conveys no authority. */
@@ -249,20 +251,22 @@ type T0 = string;
 type T1 = number;
 type T2 = { "id": T0; "title": T0; "amount": T1; "date": T0; };
 type T3 = { "count": T1; };
-type T4 = { "epochAtZero": T1; "utcOffset": T1; };
-type T5 = T0[];
-type T6 = T2[];
-type T7 = T3 | null;
-type T8 = boolean;
+type T4 = { "total": T1; "count": T1; };
+type T5 = { "epochAtZero": T1; "utcOffset": T1; };
+type T6 = T0[];
+type T7 = T2[];
+type T8 = T3 | null;
+type T9 = boolean;
 
 /** Sources called by compiled mutation sends. */
 export type MutationSource = "addExpense" | "removeAll" | "removeExpenses" | "undoDelete" | "updateExpense";
 
 export interface SourceMap {
   "addExpense": { args: [T0, T0, T0]; result: T3 };
-  "expenses": { args: []; result: T6 };
+  "expenseSummary": { args: [T0, T0]; result: T4 };
+  "expenses": { args: []; result: T7 };
   "removeAll": { args: []; result: T3 };
-  "removeExpenses": { args: [T5]; result: T3 };
+  "removeExpenses": { args: [T6]; result: T3 };
   "undoDelete": { args: []; result: T3 };
   "updateExpense": { args: [T0, T0, T0, T0]; result: T3 };
 }

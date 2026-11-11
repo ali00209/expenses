@@ -7,6 +7,10 @@ shape Expense
 shape Change
   count: number
 
+shape Summary
+  total: number
+  count: number
+
 shape Time
   epochAtZero: number
   utcOffset: number
@@ -22,10 +26,23 @@ component Expenses
   state editDate = ""
   state toast = ""
   state toastUntil = 0
+  state now = 0
+  state filter = "all"
+  state customStart = ""
+  state customEnd = ""
   resource expenses = expenses() as shape Expense[]
   resource time = exactTime() as shape Time
-  mutation changed as shape Change refreshes expenses
-  derive currentDate = formatDate(time.epochAtZero + performanceNow(), time.utcOffset, "iso")
+  mutation changed as shape Change refreshes expenses, summary
+  derive currentDate = formatDate(time.epochAtZero + now, time.utcOffset, "iso")
+  derive filterStart = filter == "today" ? currentDate : filter == "week" ? formatDate(time.epochAtZero + now - 6 * 86400000, time.utcOffset, "iso") : filter == "month" ? `${currentDate.slice(0, 7)}-01` : filter == "custom" ? customStart : ""
+  derive filterEnd = filter == "custom" ? customEnd : filter == "all" ? "" : currentDate
+  derive visibleExpenses = expenses.filter((expense) => (filterStart == "" or expense.date >= filterStart) and (filterEnd == "" or expense.date <= filterEnd))
+  resource summary = expenseSummary(filterStart, filterEnd) as shape Summary
+
+  task refreshDate mount
+    every(60000, refreshDate)
+  action refreshDate
+    now = performanceNow()
 
   action setTitle(value: string)
     title = value
@@ -33,6 +50,12 @@ component Expenses
     amount = value
   action setDate(value: string)
     date = value
+  action setFilter(value: string)
+    filter = value
+  action setCustomStart(value: string)
+    customStart = value
+  action setCustomEnd(value: string)
+    customEnd = value
   action add
     if title.trim() != "" and amount.trim() != ""
       send changed = addExpense(title.trim(), amount.trim(), date == "" ? currentDate : date)
@@ -104,7 +127,28 @@ component Expenses
             button press=add disabled=(title.trim() == "" or amount.trim() == "") buttonStyle="filled" testId="add"
               text "Add expense"
         section
-          for expense in expenses key=expense.id
+          column padding=16 gap=8 background-color="-exact-secondary-background" border-radius=12 testId="summary"
+            row
+              column flex=1
+                text "Total expenses"
+                text `PKR ${formatNumber(summary.total, "decimal")}` role="heading" aria-level=2 testId="total"
+              column
+                text "Expenses"
+                text `${summary.count}` role="heading" aria-level=2 testId="count"
+          row gap=8
+            text "Show"
+            select value=filter change=setFilter aria-label="Filter expenses by date" testId="filter"
+              option "All dates" value="all"
+              option "Today" value="today"
+              option "This week" value="week"
+              option "This month" value="month"
+              option "Custom range" value="custom"
+          if filter == "custom"
+            row gap=8
+              input type="date" value=customStart change=setCustomStart aria-label="Filter start date" testId="filter-start"
+              input type="date" value=customEnd change=setCustomEnd aria-label="Filter end date" testId="filter-end"
+        section
+          for expense in visibleExpenses key=expense.id
             row testId=`expense-${expense.id}` gap=8
               input type="checkbox" checked=selected.includes(expense.id) change=toggleSelected(expense.id) aria-label=`Select ${expense.title}` testId=`select-${expense.id}`
               column flex=1 min-width=0
