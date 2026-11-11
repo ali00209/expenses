@@ -99,7 +99,7 @@ jobs:
 
       - name: Install Exact dependencies
         working-directory: exact
-        run: bun install --frozen-lockfile
+        run: bun install --no-frozen-lockfile
 
       - name: Prepare Exact toolchain
         working-directory: exact
@@ -163,7 +163,7 @@ jobs:
 
       - name: Install Exact dependencies
         working-directory: exact
-        run: bun install --frozen-lockfile
+        run: bun install --no-frozen-lockfile
 
       - name: Prepare Exact toolchain
         working-directory: exact
