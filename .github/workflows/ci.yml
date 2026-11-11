@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Check out app
         uses: actions/checkout@v4
+        with:
+          path: app
 
       - name: Check out Exact
         uses: actions/checkout@v4
@@ -40,14 +42,17 @@ jobs:
         run: bun scripts/exact.mjs setup
 
       - name: Validate Contract
+        working-directory: app
         run: |
           bun exact.mjs contract types app.contract -o app.contract.d.ts
           bun exact.mjs contract build app.contract --json --errors-only
 
       - name: Run web Contract test
+        working-directory: app
         run: bun exact.mjs test web app.test.contract
 
       - name: Build web
+        working-directory: app
         run: bun exact.mjs web-build --out dist
 
       - name: Configure Pages
@@ -58,7 +63,7 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: app/dist
 
   deploy-pages:
     name: Deploy web to GitHub Pages
@@ -85,6 +90,8 @@ jobs:
     steps:
       - name: Check out app
         uses: actions/checkout@v4
+        with:
+          path: app
 
       - name: Check out Exact
         uses: actions/checkout@v4
@@ -106,21 +113,22 @@ jobs:
         run: bun scripts/exact.mjs setup
 
       - name: Build Linux host
+        working-directory: app
         run: bun exact.mjs linux
 
       - name: Package Linux artifact
         run: |
-          mkdir -p release
-          find target/host-dev -maxdepth 1 -type f -executable -name '*-linux' -print -exec cp {} release/ \;
-          find target/host-dev -maxdepth 1 -type f -name '*.desktop' -print -exec cp {} release/ \;
-          test -n "$(find release -type f -name '*-linux' -print -quit)"
-          tar -czf "release/expenses-linux-${GITHUB_REF_NAME}.tar.gz" -C release .
+          mkdir -p app/release
+          find app/target/host-dev -maxdepth 1 -type f -executable -name '*-linux' -print -exec cp {} app/release/ \;
+          find app/target/host-dev -maxdepth 1 -type f -name '*.desktop' -print -exec cp {} app/release/ \;
+          test -n "$(find app/release -type f -name '*-linux' -print -quit)"
+          tar -czf "app/release/expenses-linux-${GITHUB_REF_NAME}.tar.gz" -C app/release .
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: expenses-linux
-          path: release/expenses-linux-*.tar.gz
+          path: app/release/expenses-linux-*.tar.gz
 
   android:
     name: Build Android release
@@ -131,6 +139,8 @@ jobs:
     steps:
       - name: Check out app
         uses: actions/checkout@v4
+        with:
+          path: app
 
       - name: Check out Exact
         uses: actions/checkout@v4
@@ -169,14 +179,14 @@ jobs:
       - name: Build Android APK
         working-directory: exact
         env:
-          EXACT_APP_DIR: ${{ github.workspace }}
+          EXACT_APP_DIR: ${{ github.workspace }}/app
         run: bun scripts/agent-android.mjs build expenses --apk
 
       - name: Upload Android artifact
         uses: actions/upload-artifact@v4
         with:
           name: expenses-android
-          path: target/android/app/build/outputs/apk/release/app-release.apk
+          path: app/target/android/app/build/outputs/apk/release/app-release.apk
 
   release:
     name: Publish native release
