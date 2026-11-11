@@ -1,0 +1,36 @@
+shape Expense
+  id: string
+  description: string
+
+shape Change
+  count: number
+
+component Expenses
+  state draft = ""
+  resource expenses = expenses() as shape Expense[]
+  mutation changed as shape Change refreshes expenses
+
+  action edit(value: string)
+    draft = value
+  action add
+    if draft.trim() != ""
+      send changed = addExpense(draft.trim())
+      draft = ""
+  action remove(id: string)
+    send changed = removeExpense(id)
+
+  view
+    list id="expenses" appearance="auto" listStyle="inset-grouped" flex=1 min-height=0 testId="root"
+      section
+        header
+          text "Expenses" role="heading" aria-level=1
+        row gap=8
+          input value=draft input=edit submit=add placeholder="Add an expense" aria-label="New expense" testId="new-expense" flex=1 min-width=0
+          button press=add disabled=(draft.trim() == "") buttonStyle="filled" testId="add"
+            text "Add"
+      section
+        for expense in expenses key=expense.id
+          row testId=`expense-${expense.id}` delete=remove(expense.id)
+            text expense.description flex=1 testId=`description-${expense.id}`
+            button press=remove(expense.id) destructive=true testId=`remove-${expense.id}`
+              text "Delete"
