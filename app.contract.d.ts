@@ -261,8 +261,8 @@ type T10 = T9[];
 type T11 = { "tab": T0; "tabs": T10; "next": T1; };
 type T12 = T0[];
 type T13 = T2[];
-type T14 = T3 | null;
-type T15 = boolean;
+type T14 = boolean;
+type T15 = T3 | null;
 
 /** Sources called by compiled mutation sends. */
 export type MutationSource = "addExpense" | "removeAll" | "removeExpenses" | "undoDelete" | "updateExpense";

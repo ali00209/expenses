@@ -15,6 +15,8 @@ shape Time
   epochAtZero: number
   utcOffset: number
 
+fn money(amount: number): string = amount >= 10000000 ? `PKR ${formatNumber(amount / 10000000, "decimal")} crore` : amount >= 100000 ? `PKR ${formatNumber(amount / 100000, "decimal")} lakh` : amount >= 1000 ? `PKR ${formatNumber(amount / 1000, "decimal")}k` : `PKR ${formatNumber(amount, "decimal")}`
+
 routes nav
   home "/"
     add "/add"
@@ -42,6 +44,7 @@ component Expenses
   derive filterStart = filter == "today" ? currentDate : filter == "week" ? formatDate(time.epochAtZero + now - 6 * 86400000, time.utcOffset, "iso") : filter == "month" ? `${currentDate.slice(0, 7)}-01` : filter == "custom" ? customStart : ""
   derive filterEnd = filter == "custom" ? customEnd : filter == "all" ? "" : currentDate
   derive visibleExpenses = expenses.filter((expense) => (filterStart == "" or expense.date >= filterStart) and (filterEnd == "" or expense.date <= filterEnd))
+  derive allSelected = expenses.length > 0 and selected.length == expenses.length
   resource summary = expenseSummary(filterStart, filterEnd) as shape Summary
 
   task refreshDate mount
@@ -72,6 +75,8 @@ component Expenses
     selected = checked ? selected.concat([id]) : selected.filter((item) => item != id)
   action selectAll
     selected = expenses.map((expense) => expense.id)
+  action deselectAll
+    selected = []
   action removeOne(id: string)
     send changed = removeExpenses([id])
     selected = selected.filter((item) => item != id)
@@ -136,6 +141,8 @@ component Expenses
                 header
                   text "Expenses" role="heading" aria-level=1
                 row
+                  button popovertarget="filter-menu" aria-label="Filter expenses" testId="filter-button"
+                    text "Filter"
                   button popovertarget="more-menu" aria-label="More options" testId="more"
                     text "More"
               section
@@ -143,29 +150,17 @@ component Expenses
                   row
                     column flex=1
                       text "Total expenses"
-                      text `PKR ${formatNumber(summary.total, "decimal")}` role="heading" aria-level=2 testId="total"
+                      text money(summary.total) role="heading" aria-level=2 testId="total"
                     column
                       text "Expenses"
                       text `${summary.count}` role="heading" aria-level=2 testId="count"
-                row gap=8
-                  text "Show"
-                  select value=filter change=setFilter aria-label="Filter expenses by date" testId="filter"
-                    option "All dates" value="all"
-                    option "Today" value="today"
-                    option "This week" value="week"
-                    option "This month" value="month"
-                    option "Custom range" value="custom"
-                if filter == "custom"
-                  row gap=8
-                    input type="date" value=customStart change=setCustomStart aria-label="Filter start date" testId="filter-start"
-                    input type="date" value=customEnd change=setCustomEnd aria-label="Filter end date" testId="filter-end"
               section
                 for expense in visibleExpenses key=expense.id
                   row testId=`expense-${expense.id}` gap=8
                     input type="checkbox" checked=selected.includes(expense.id) change=toggleSelected(expense.id) aria-label=`Select ${expense.title}` testId=`select-${expense.id}`
                     column flex=1 min-width=0
                       text expense.title testId=`title-${expense.id}`
-                      text `PKR ${formatNumber(expense.amount, "decimal")} · ${expense.date}` testId=`details-${expense.id}`
+                      text `${money(expense.amount)} · ${expense.date}` testId=`details-${expense.id}`
                     button press=beginEdit(expense.id, expense.title, expense.amount.toString(), expense.date) testId=`edit-${expense.id}`
                       text "Edit"
                     button press=removeOne(expense.id) destructive=true testId=`remove-${expense.id}`
@@ -174,17 +169,37 @@ component Expenses
               text "+"
 
             column id="more-menu" popover="auto" role="menu" aria-label="More options"
-              button press=selectAll popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(expenses.length == 0) testId="select-all"
-                text "Select all"
+              if allSelected
+                button press=deselectAll popovertarget="more-menu" popovertargetaction="hide" role="menuitem" testId="deselect-all"
+                  text "Deselect all"
+              else
+                button press=selectAll popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(expenses.length == 0) testId="select-all"
+                  text "Select all"
               button press=deleteSelected popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(selected.length == 0) testId="delete-selected"
                 text "Delete selected"
               button press=deleteAll popovertarget="more-menu" popovertargetaction="hide" role="menuitem" disabled=(expenses.length == 0) testId="delete-all"
                 text "Delete all"
+
+            column id="filter-menu" popover="auto" role="menu" aria-label="Filter expenses"
+              button press=setFilter("all") popovertarget="filter-menu" popovertargetaction="hide" role="menuitem" testId="filter-all"
+                text "All dates"
+              button press=setFilter("today") popovertarget="filter-menu" popovertargetaction="hide" role="menuitem" testId="filter-today"
+                text "Today"
+              button press=setFilter("week") popovertarget="filter-menu" popovertargetaction="hide" role="menuitem" testId="filter-week"
+                text "This week"
+              button press=setFilter("month") popovertarget="filter-menu" popovertargetaction="hide" role="menuitem" testId="filter-month"
+                text "This month"
+              button press=setFilter("custom") role="menuitem" testId="filter-custom"
+                text "Custom range"
+              if filter == "custom"
+                row gap=8
+                  input type="date" value=customStart change=setCustomStart aria-label="Filter start date" testId="filter-start"
+                  input type="date" value=customEnd change=setCustomEnd aria-label="Filter end date" testId="filter-end"
         if e.name == "add"
           column navigationKey=`${e.id}` navigationPresentation="modal" navigationDetent="fit-content large" position="absolute" inset=0 background-color="-exact-background" padding=20 gap=12 testId="expense-form"
             header
               text "Add expense" role="heading" aria-level=2 flex=1
-            input value=title input=setTitle placeholder="Expense title" aria-label="Expense title" testId="title"
+            input value=title input=setTitle maxlength=100 placeholder="Expense title" aria-label="Expense title" testId="title"
             input type="number" inputmode="decimal" value=amount input=setAmount min=0 step=0.01 placeholder="Amount" aria-label="Expense amount" testId="amount"
             input type="date" value=(date == "" ? currentDate : date) change=setDate aria-label="Expense date" testId="date"
             row gap=8
@@ -196,7 +211,7 @@ component Expenses
           column navigationKey=`${e.id}` navigationPresentation="modal" navigationDetent="fit-content large" position="absolute" inset=0 background-color="-exact-background" padding=20 gap=12 testId="expense-form"
             header
               text "Edit expense" role="heading" aria-level=2 flex=1
-            input value=editTitle input=setEditTitle placeholder="Expense title" aria-label="Edit expense title" testId="edit-title"
+            input value=editTitle input=setEditTitle maxlength=100 placeholder="Expense title" aria-label="Edit expense title" testId="edit-title"
             input type="number" inputmode="decimal" value=editAmount input=setEditAmount min=0 step=0.01 placeholder="Amount" aria-label="Edit expense amount" testId="edit-amount"
             input type="date" value=editDate change=setEditDate aria-label="Edit expense date" testId="edit-date"
             row gap=8

@@ -24,7 +24,7 @@ const sources: Sources = {
     if (!title || !date || !Number.isFinite(parsedAmount) || parsedAmount < 0) {
       return { count: expenses.length };
     }
-    expenses = [...expenses, { id: String(next++), title, amount: parsedAmount, date }];
+    expenses = [...expenses, { id: String(next++), title: title.slice(0, 100), amount: parsedAmount, date }];
     return { count: expenses.length };
   },
   removeExpenses: ([ids]): Result<'removeExpenses'> => {
@@ -50,7 +50,7 @@ const sources: Sources = {
       return { count: expenses.length };
     }
     expenses = expenses.map((expense) =>
-      expense.id === id ? { ...expense, title, amount: parsedAmount, date } : expense,
+      expense.id === id ? { ...expense, title: title.slice(0, 100), amount: parsedAmount, date } : expense,
     );
     return { count: expenses.length };
   },
