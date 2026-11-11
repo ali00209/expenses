@@ -98,11 +98,11 @@ jobs:
 
       - name: Package Linux artifact
         run: |
-          mkdir -p app/release
-          find app/target/host-dev -maxdepth 1 -type f -executable -name '*-linux' -print -exec cp {} app/release/ \;
-          find app/target/host-dev -maxdepth 1 -type f -name '*.desktop' -print -exec cp {} app/release/ \;
-          test -n "$(find app/release -type f -name '*-linux' -print -quit)"
-          tar -czf "app/release/expenses-linux-v${RELEASE_VERSION}.tar.gz" -C app/release .
+          mkdir -p app/release app/release-content
+          find app/target/host-dev -maxdepth 1 -type f -executable -name '*-linux' -print -exec cp {} app/release-content/ \;
+          find app/target/host-dev -maxdepth 1 -type f -name '*.desktop' -print -exec cp {} app/release-content/ \;
+          test -n "$(find app/release-content -type f -name '*-linux' -print -quit)"
+          tar -czf "app/release/expenses-linux-v${RELEASE_VERSION}.tar.gz" -C app/release-content .
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
@@ -141,6 +141,8 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       - name: Install Android NDK
         run: yes | sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;27.1.12297006"
