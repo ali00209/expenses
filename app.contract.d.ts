@@ -4,17 +4,41 @@
 // What app.ts writes, in brief (the declarations follow): `sources: Sources` has one
 // function per source, given its arguments as an array (then store, storage, native) and
 // answering its shape, or a Promise of it.
-//   addExpense: (args: [string, string, string]) => Change
-//   expenseSummary: (args: [string, string]) => Summary
-//   expenses: (args: []) => Expense[]
-//   removeAll: (args: []) => Change
-//   removeExpenses: (args: [string[]]) => Change
-//   undoDelete: (args: []) => Change
-//   updateExpense: (args: [string, string, string, string]) => Change
-// The shapes. None is exported: name one by its source, `type Change = Result<'addExpense'>`.
-//   Expense = { id: string; title: string; amount: number; date: string }
-//   Change = { count: number }
-//   Summary = { total: number; count: number }
+//   addGroupMember: (args: [string, string, string, number]) => AuthReply
+//   authenticate: (args: [string, string, string, string, number]) => AuthReply
+//   bootstrap: (args: []) => Bootstrap
+//   createGroup: (args: [string, string, number]) => JoinReply
+//   deleteExpense: (args: [string, string, number]) => SaveReply
+//   discardFailed: (args: []) => SaveReply
+//   drainSync: (args: [number]) => SyncReply
+//   ensureSession: (args: [number]) => SessionReply
+//   groupList: (args: []) => Group[]
+//   groupView: (args: [string]) => GroupView
+//   joinGroup: (args: [string, number]) => JoinReply
+//   leaveDemo: (args: [number]) => AuthReply
+//   recordSettlement: (args: [string, string, string, number, number]) => SaveReply
+//   saveExpense: (args: [string, string, string, string, string, string[], string, number]) => SaveReply
+//   signOutSession: (args: []) => AuthReply
+//   startDemo: (args: [number]) => AuthReply
+//   syncStatus: (args: []) => SyncStatus
+//   syncStream: (args: [number]) => SyncFeed
+//   uploadPending: (args: [number]) => SyncReply
+// The shapes. None is exported: name one by its source, `type AuthReply = Result<'addGroupMember'>`.
+//   Group = { id: string; name: string; currency: string; code: string; role: string; memberCount: number; expenseCount: number; myNet: number; createdAt: string }
+//   Member = { id: string; name: string; email: string; role: string; net: number }
+//   Expense = { id: string; description: string; amount: number; currency: string; payerId: string; payerName: string; date: string; dateLabel: string; participants: string[]; participantCount: number; createdById: string; canEdit: boolean }
+//   Balance = { id: string; name: string; net: number }
+//   Transfer = { fromId: string; fromName: string; toId: string; toName: string; amount: number }
+//   Activity = { id: string; actorName: string; message: string; when: string }
+//   GroupView = { id: string; name: string; currency: string; code: string; role: string; createdAt: string; members: Member[]; expenses: Expense[]; balances: Balance[]; transfers: Transfer[]; activity: Activity[]; myNet: number; myName: string; expenseCount: number; canManage: boolean }
+//   Bootstrap = { signedIn: boolean; demo: boolean; userId: string; name: string; email: string; pending: number; mode: string; message: string }
+//   SyncStatus = { state: string; pending: number; failed: number; error: string; lastSynced: string; expiresIn: number; demo: boolean }
+//   AuthReply = { ok: boolean; error: string; name: string; email: string }
+//   JoinReply = { ok: boolean; error: string; groupId: string }
+//   SaveReply = { ok: boolean; error: string; id: string }
+//   SyncReply = { applied: number; uploaded: number; pending: number; state: string; error: string }
+//   SessionReply = { ok: boolean; refreshed: boolean; error: string }
+//   SyncFeed = { state: string; lines: number; expiresIn: number }
 
 /** Storage capabilities supplied by the host. Import these types; there are
  * no ambient fs/sqlite globals and importing a type conveys no authority. */
@@ -249,32 +273,67 @@ export interface Statement {
 
 type T0 = string;
 type T1 = number;
-type T2 = { "id": T0; "title": T0; "amount": T1; "date": T0; };
-type T3 = { "count": T1; };
-type T4 = { "total": T1; "count": T1; };
-type T5 = { "epochAtZero": T1; "utcOffset": T1; };
-type T6 = { };
-type T7 = { "id": T1; "name": T0; "url": T0; "tab": T0; "params": T6; "fragment": T0; };
-type T8 = T7[];
-type T9 = { "name": T0; "stack": T8; };
-type T10 = T9[];
-type T11 = { "tab": T0; "tabs": T10; "next": T1; };
-type T12 = T0[];
-type T13 = T2[];
-type T14 = boolean;
-type T15 = T3 | null;
+type T2 = { "id": T0; "name": T0; "currency": T0; "code": T0; "role": T0; "memberCount": T1; "expenseCount": T1; "myNet": T1; "createdAt": T0; };
+type T3 = { "id": T0; "name": T0; "email": T0; "role": T0; "net": T1; };
+type T4 = T0[];
+type T5 = boolean;
+type T6 = { "id": T0; "description": T0; "amount": T1; "currency": T0; "payerId": T0; "payerName": T0; "date": T0; "dateLabel": T0; "participants": T4; "participantCount": T1; "createdById": T0; "canEdit": T5; };
+type T7 = { "id": T0; "name": T0; "net": T1; };
+type T8 = { "fromId": T0; "fromName": T0; "toId": T0; "toName": T0; "amount": T1; };
+type T9 = { "id": T0; "actorName": T0; "message": T0; "when": T0; };
+type T10 = T3[];
+type T11 = T6[];
+type T12 = T7[];
+type T13 = T8[];
+type T14 = T9[];
+type T15 = { "id": T0; "name": T0; "currency": T0; "code": T0; "role": T0; "createdAt": T0; "members": T10; "expenses": T11; "balances": T12; "transfers": T13; "activity": T14; "myNet": T1; "myName": T0; "expenseCount": T1; "canManage": T5; };
+type T16 = { "signedIn": T5; "demo": T5; "userId": T0; "name": T0; "email": T0; "pending": T1; "mode": T0; "message": T0; };
+type T17 = { "state": T0; "pending": T1; "failed": T1; "error": T0; "lastSynced": T0; "expiresIn": T1; "demo": T5; };
+type T18 = { "ok": T5; "error": T0; "name": T0; "email": T0; };
+type T19 = { "ok": T5; "error": T0; "groupId": T0; };
+type T20 = { "ok": T5; "error": T0; "id": T0; };
+type T21 = { "applied": T1; "uploaded": T1; "pending": T1; "state": T0; "error": T0; };
+type T22 = { "ok": T5; "refreshed": T5; "error": T0; };
+type T23 = { "state": T0; "lines": T1; "expiresIn": T1; };
+type T24 = { "epochAtZero": T1; "utcOffset": T1; };
+type T25 = { "accessibilityTextSize": T5; };
+type T26 = { "prefersContrast": T0; };
+type T27 = { "id": T0; "expenseId": T0; };
+type T28 = { "id": T1; "name": T0; "url": T0; "tab": T0; "params": T27; "fragment": T0; };
+type T29 = T28[];
+type T30 = { "name": T0; "stack": T29; };
+type T31 = T30[];
+type T32 = { "tab": T0; "tabs": T31; "next": T1; };
+type T33 = T2[];
+type T34 = T18 | null;
+type T35 = T19 | null;
+type T36 = T20 | null;
+type T37 = T21 | null;
+type T38 = T22 | null;
 
 /** Sources called by compiled mutation sends. */
-export type MutationSource = "addExpense" | "removeAll" | "removeExpenses" | "undoDelete" | "updateExpense";
+export type MutationSource = "addGroupMember" | "authenticate" | "createGroup" | "deleteExpense" | "discardFailed" | "drainSync" | "ensureSession" | "joinGroup" | "leaveDemo" | "recordSettlement" | "saveExpense" | "signOutSession" | "startDemo" | "uploadPending";
 
 export interface SourceMap {
-  "addExpense": { args: [T0, T0, T0]; result: T3 };
-  "expenseSummary": { args: [T0, T0]; result: T4 };
-  "expenses": { args: []; result: T13 };
-  "removeAll": { args: []; result: T3 };
-  "removeExpenses": { args: [T12]; result: T3 };
-  "undoDelete": { args: []; result: T3 };
-  "updateExpense": { args: [T0, T0, T0, T0]; result: T3 };
+  "addGroupMember": { args: [T0, T0, T0, T1]; result: T18 };
+  "authenticate": { args: [T0, T0, T0, T0, T1]; result: T18 };
+  "bootstrap": { args: []; result: T16 };
+  "createGroup": { args: [T0, T0, T1]; result: T19 };
+  "deleteExpense": { args: [T0, T0, T1]; result: T20 };
+  "discardFailed": { args: []; result: T20 };
+  "drainSync": { args: [T1]; result: T21 };
+  "ensureSession": { args: [T1]; result: T22 };
+  "groupList": { args: []; result: T33 };
+  "groupView": { args: [T0]; result: T15 };
+  "joinGroup": { args: [T0, T1]; result: T19 };
+  "leaveDemo": { args: [T1]; result: T18 };
+  "recordSettlement": { args: [T0, T0, T0, T1, T1]; result: T20 };
+  "saveExpense": { args: [T0, T0, T0, T0, T0, T4, T0, T1]; result: T20 };
+  "signOutSession": { args: []; result: T18 };
+  "startDemo": { args: [T1]; result: T18 };
+  "syncStatus": { args: []; result: T17 };
+  "syncStream": { args: [T1]; result: T23 };
+  "uploadPending": { args: [T1]; result: T21 };
 }
 
 export type Source = keyof SourceMap;
@@ -336,3 +395,41 @@ export type Answer = <S extends Source>(source: S, args: Args<S>, store: Store, 
 export type Write = { [S in Source]: { readonly id: number; readonly mutation: string; readonly source: S; readonly args: Args<S>; readonly reply?: Result<S>; readonly answered: boolean; keep(): void } }[Source];
 /** What a resource shows while writes affect it: its answer with them laid over it. Synchronous, with no effects; `undefined` shows the answer and stops showing every answered write. */
 export type Overlay = <S extends Source>(source: S, args: Args<S>, answer: Result<S>, writes: readonly Write[]) => Result<S> | undefined;
+/** A colour token of the app's design, by its name (LLP 1121 D12). */
+export type ColorToken = "AccentColor";
+/** An image, by the URL or asset an `image` node's `src` takes (LLP 1056 D9). */
+export type ImageHandle = string;
+/** The 2D context a surface draws with (LLP 1056 §3, stages 1 and 2). */
+export type Ctx2D = Pick<OffscreenCanvasRenderingContext2D,
+  | 'save' | 'restore' | 'reset'
+  | 'translate' | 'rotate' | 'scale' | 'transform' | 'setTransform' | 'resetTransform' | 'getTransform'
+  | 'beginPath' | 'moveTo' | 'lineTo' | 'quadraticCurveTo' | 'bezierCurveTo' | 'arc' | 'arcTo' | 'ellipse' | 'rect' | 'roundRect' | 'closePath'
+  | 'fill' | 'stroke' | 'clip' | 'fillRect' | 'strokeRect' | 'clearRect'
+  | 'lineWidth' | 'lineCap' | 'lineJoin' | 'miterLimit' | 'setLineDash' | 'getLineDash' | 'lineDashOffset'
+  | 'fillStyle' | 'strokeStyle' | 'createLinearGradient' | 'createRadialGradient' | 'createConicGradient'
+  | 'globalAlpha' | 'globalCompositeOperation'
+  | 'shadowColor' | 'shadowBlur' | 'shadowOffsetX' | 'shadowOffsetY'
+  | 'imageSmoothingEnabled' | 'imageSmoothingQuality'
+  | 'font' | 'textAlign' | 'textBaseline' | 'direction' | 'letterSpacing' | 'wordSpacing'
+  | 'fontKerning' | 'fontStretch' | 'fontVariantCaps' | 'textRendering'
+  | 'fillText' | 'strokeText' | 'measureText'
+  | 'createImageData' | 'putImageData'> & {
+  drawImage(image: ImageHandle, dx: number, dy: number): void;
+  drawImage(image: ImageHandle, dx: number, dy: number, dw: number, dh: number): void;
+  drawImage(image: ImageHandle, sx: number, sy: number, sw: number, sh: number, dx: number, dy: number, dw: number, dh: number): void;
+  createPattern(image: ImageHandle, repetition: string | null): CanvasPattern | null;
+};
+/** What one draw is told (LLP 1056 D4–D6). */
+export interface Frame {
+  readonly time: number;
+  readonly mounted: number;
+  readonly cause: 'mount' | 'args' | 'size' | 'frame' | 'image' | 'font' | 'style';
+  readonly causes: readonly string[];
+  readonly width: number;
+  readonly height: number;
+  readonly pixelWidth: number;
+  readonly pixelHeight: number;
+  readonly scale: number;
+}
+/** A module's `draw`: true asks for another frame. */
+export type Draw = (surface: string, args: any, ctx: Ctx2D, frame: Frame) => boolean;

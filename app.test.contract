@@ -1,50 +1,94 @@
-test "add, edit, select, delete and undo expenses"
-  expect tree has "root"
-  tap "open-add"
+epoch "2026-11-12T10:00:00Z"
+time-zone "Asia/Karachi"
+
+test "the demo shows balances and records a suggested payment"
+  tap "demo"
+  clock data
+  expect tree has "group-d-group-hostel"
+  expect text "group-net-d-group-hostel" == "PKR 180"
+  tap "group-d-group-hostel"
+  clock data
+  expect text "my-balance" == "You are owed PKR 180"
+  expect text "balance-net-d-user-ali" == "gets back PKR 180"
+  expect text "balance-net-d-user-numan" == "owes PKR 60"
+  expect text "balance-net-d-user-shahroz" == "owes PKR 120"
+  tap "settle"
   clock settle
-  type "title" "Coffee"
-  type "amount" "250"
-  type "date" "2026-11-11"
-  tap "add"
-  clock settle
-  tap "open-add"
-  clock settle
-  type "title" "Train ticket"
-  type "amount" "120"
-  type "date" "2026-11-10"
-  tap "add"
-  clock settle
-  expect tree has "expense-1"
-  expect tree has "expense-2"
-  expect text "total" == "PKR 370"
-  expect text "count" == "2"
-  expect text "title-1" == "Coffee"
-  expect text "details-1" == "PKR 250 · 2026-11-11"
-  tap "edit-1"
-  clock settle
-  type "edit-title" "Coffee and tea"
-  type "edit-amount" "300"
-  tap "save-edit"
-  clock settle
-  expect text "title-1" == "Coffee and tea"
-  expect text "details-1" == "PKR 300 · 2026-11-11"
-  tap "select-1"
-  tap "more"
-  tap "delete-selected"
-  expect tree missing "expense-1"
+  expect tree has "transfer-d-user-shahroz-d-user-ali"
+  expect tree has "transfer-d-user-numan-d-user-ali"
+  tap "pay-d-user-shahroz-d-user-ali"
+  clock data
   expect tree has "toast"
-  tap "undo"
-  expect tree has "expense-1"
-  tap "select-1"
-  tap "more"
-  tap "select-all"
-  tap "more"
-  expect tree has "deselect-all"
-  tap "remove-1"
-  expect tree missing "expense-1"
-  expect tree has "expense-2"
-  tap "filter-button"
-  tap "filter-custom"
-  type "filter-start" "2026-11-11"
-  type "filter-end" "2026-11-11"
-  expect tree missing "expense-2"
+  tap "close-settle"
+  clock settle
+  expect text "my-balance" == "You are owed PKR 60"
+
+test "an expense is added, edited and deleted"
+  tap "demo"
+  clock data
+  tap "group-d-group-hostel"
+  clock data
+  tap "add-expense"
+  clock settle
+  type "expense-description" "Internet"
+  type "expense-amount" "30"
+  tap "save-expense"
+  clock data
+  expect text "expense-count" == "3 expenses"
+  expect text "my-balance" == "You are owed PKR 200"
+  tap "edit-first"
+  clock settle
+  type "expense-description" "Internet and wifi"
+  type "expense-amount" "60"
+  tap "save-expense"
+  clock data
+  expect text "expense-count" == "3 expenses"
+  expect text "my-balance" == "You are owed PKR 220"
+  tap "edit-first"
+  clock settle
+  tap "delete-expense"
+  clock data
+  expect text "expense-count" == "2 expenses"
+  expect text "my-balance" == "You are owed PKR 180"
+
+test "a new group and its expense survive a relaunch"
+  tap "demo"
+  clock data
+  tap "new-group"
+  clock settle
+  type "group-name" "Beach"
+  tap "create-group"
+  clock data
+  expect text "group-title" == "Beach"
+  expect text "expense-count" == "0 expenses"
+  expect text "my-balance" == "You are settled up"
+  tap "add-expense"
+  clock settle
+  type "expense-description" "Sunscreen"
+  type "expense-amount" "1200"
+  tap "save-expense"
+  clock data
+  expect text "expense-count" == "1 expense"
+  expect text "my-balance" == "You are settled up"
+  reload
+  expect state groups.0 .name == "Beach"
+  expect state groups.0 .expenseCount == 1
+  expect state groups.0 .myNet == 0
+
+test "leaving the demo returns to the welcome screen"
+  tap "demo"
+  clock data
+  tap "account"
+  clock settle
+  tap "leave-demo"
+  clock data
+  expect tree has "demo"
+  expect tree has "email"
+  expect tree missing "group-d-group-hostel"
+
+test "sign in needs both fields"
+  expect disabled "sign-in"
+  type "email" "ali@example.com"
+  expect disabled "sign-in"
+  type "password" "correct horse"
+  expect enabled "sign-in"

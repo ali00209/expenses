@@ -1,13 +1,13 @@
 {
   "$schema": "../exact/scripts/app.schema.json",
-  "name": "Expenses",
-  "short_name": "Expenses",
-  "id": "com.example.expenses-4155c7",
+  "name": "Tally",
+  "short_name": "Tally",
+  "id": "com.tally.expenses",
   "start_url": "/",
   "display": "standalone",
   "app": {
-    "id": "com.example.expenses-4155c7",
-    "name": "Expenses"
+    "id": "com.tally.expenses",
+    "name": "Tally"
   },
   "host": {
     "web": {},
