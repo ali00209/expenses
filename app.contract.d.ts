@@ -396,7 +396,11 @@ export type Write = { [S in Source]: { readonly id: number; readonly mutation: s
 /** What a resource shows while writes affect it: its answer with them laid over it. Synchronous, with no effects; `undefined` shows the answer and stops showing every answered write. */
 export type Overlay = <S extends Source>(source: S, args: Args<S>, answer: Result<S>, writes: readonly Write[]) => Result<S> | undefined;
 /** A colour token of the app's design, by its name (LLP 1121 D12). */
-export type ColorToken = "AccentColor";
+export type ColorToken = "surface.page" | "surface.card" | "surface.grouped" | "text.primary" | "text.secondary" | "text.inverse" | "accent.primary" | "accent.success" | "accent.danger" | "accent.warning" | "button.primary.bg" | "button.primary.text" | "button.secondary.bg" | "button.secondary.text" | "border.default" | "-exact-separator" | "overlay.scrim";
+/** A length token of the app's design, by its name (LLP 1121 D12). */
+export type LengthToken = "font.size.body" | "font.size.heading" | "font.size.caption" | "space.xs" | "space.sm" | "space.md" | "space.lg" | "space.xl" | "radius.sm" | "radius.md" | "radius.lg" | "radius.pill";
+/** A number token of the app's design, by its name (LLP 1121 D12). */
+export type NumberToken = "font.weight.normal" | "font.weight.bold" | "opacity.disabled" | "opacity.muted";
 /** An image, by the URL or asset an `image` node's `src` takes (LLP 1056 D9). */
 export type ImageHandle = string;
 /** The 2D context a surface draws with (LLP 1056 §3, stages 1 and 2). */

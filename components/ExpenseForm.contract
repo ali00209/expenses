@@ -1,0 +1,74 @@
+use Member from "../lib/shapes.contract"
+use ParticipantRow from "./ParticipantRow.contract"
+
+component ExpenseForm
+  props
+    currency: string
+    currentDate: string
+    members: Member[]
+    description: string
+    amount: string
+    date: string
+    payer: string
+    participants: string[]
+    error: string
+    preview: string
+    showDelete: bool
+    onDescription: action
+    onAmount: action
+    onDate: action
+    onPayer: action
+    onToggleParticipant: action
+    onSelectAll: action
+    onDelete: action
+  view
+    column padding=20 gap=16 box-sizing="border-box"
+      input value=description
+        input=onDescription
+        placeholder="What was it for?"
+        aria-label="Description"
+        testId="expense-description"
+      row gap=8 align-items="center"
+        input type="number"
+          inputmode="decimal"
+          value=amount
+          input=onAmount
+          placeholder="0.00"
+          aria-label="Amount"
+          testId="expense-amount"
+          flex=1
+          min-width=0
+        text currency font-weight=600 color="text.secondary"
+      input type="date"
+        value=(date == "" ? currentDate : date)
+        change=onDate
+        aria-label="Date"
+        testId="expense-date"
+      column gap=6
+        text "Paid by" font="-exact-footnote" color="text.secondary"
+        select value=payer change=onPayer aria-label="Paid by" testId="expense-payer"
+          for m in members key=m.id
+            option m.name value=m.id
+      column gap=8
+        row
+          text "Split between" font="-exact-footnote"
+            color="text.secondary"
+            flex=1
+          button press=onSelectAll testId="select-all-people"
+            text "Select all"
+        for m in members key=m.id
+          ParticipantRow(
+            member=m,
+            checked=participants.includes(m.id),
+            onToggle=onToggleParticipant(m.id)
+          )
+      text preview font="-exact-footnote"
+        color="text.secondary"
+        testId="split-preview"
+      if error != ""
+        text error color="accent.danger"
+          font="-exact-footnote"
+          testId="expense-error"
+      if showDelete
+        button press=onDelete destructive=true testId="delete-expense"
+          text "Delete expense"

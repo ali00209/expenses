@@ -1,0 +1,13 @@
+use Balance from "../lib/shapes.contract"
+use balanceText from "../lib/format.contract"
+
+component BalanceRow
+  props
+    balance: Balance
+    currency: string
+  view
+    row testId=`balance-${balance.id}`
+      text balance.name flex=1 min-width=0
+      text balanceText(balance.net, currency) font-variant-numeric="tabular-nums"
+        color=(balance.net > 0 ? "accent.success" : balance.net < 0 ? "accent.danger" : "text.secondary")
+        testId=`balance-net-${balance.id}`

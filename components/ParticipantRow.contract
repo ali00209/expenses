@@ -1,0 +1,15 @@
+use Member from "../lib/shapes.contract"
+
+component ParticipantRow
+  props
+    member: Member
+    checked: bool
+    onToggle: action
+  view
+    row
+      input type="checkbox"
+        checked=checked
+        change=onToggle
+        aria-label=`Split with ${member.name}`
+        testId=`participant-${member.id}`
+      text member.name flex=1 min-width=0

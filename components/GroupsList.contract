@@ -1,0 +1,39 @@
+use Group from "../lib/shapes.contract"
+use money from "../lib/format.contract"
+use abs from "../lib/format.contract"
+
+component GroupsList
+  props
+    groups: Group[]
+    onNew: action
+    onJoin: action
+  view
+    section
+      header
+        text "Groups"
+      if groups.length == 0
+        row
+          column flex=1 gap=4
+            text "No groups yet"
+            text "Create one or join with an invite code." font="-exact-footnote"
+              color="text.secondary"
+      for g in groups key=g.id
+        link href=`/group/${g.id}` testId=`group-${g.id}`
+          column flex=1 min-width=0 gap=2
+            text g.name
+            text `${g.memberCount} ${g.memberCount == 1 ? "member" : "members"} · ${g.expenseCount} ${g.expenseCount == 1 ? "expense" : "expenses"}` font="-exact-footnote"
+              color="text.secondary"
+          column align-items="flex-end" gap=2
+            text (g.myNet > 0 ? "Owed to you" : g.myNet < 0 ? "You owe" : "Settled") font="-exact-caption1"
+              color="text.secondary"
+            text (g.myNet == 0 ? "" : money(abs(g.myNet), g.currency)) font-weight=600
+              font-variant-numeric="tabular-nums"
+              testId=`group-net-${g.id}`
+          image "symbol:forward-chevron"
+    section
+      button press=onNew testId="new-group"
+        image "symbol:add"
+        text "New group"
+      button press=onJoin testId="join-group"
+        image "symbol:people"
+        text "Join with a code"

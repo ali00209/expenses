@@ -1,0 +1,23 @@
+use Expense from "./shapes.contract"
+
+fn abs(n: number): number = n < 0 ? -n : n
+
+fn money(cents: number, currency: string): string = currency == "USD" ? formatNumber(cents / 100, "currency", "USD") : currency == "EUR" ? formatNumber(cents / 100, "currency", "EUR") : currency == "GBP" ? formatNumber(cents / 100, "currency", "GBP") : currency == "INR" ? formatNumber(cents / 100, "currency", "INR") : `${currency} ${formatNumber(cents / 100, "decimal")}`
+
+fn netText(cents: number, currency: string): string = cents > 0 ? `You are owed ${money(cents, currency)}` : cents < 0 ? `You owe ${money(-cents, currency)}` : "You are settled up"
+
+fn balanceText(cents: number, currency: string): string = cents > 0 ? `gets back ${money(cents, currency)}` : cents < 0 ? `owes ${money(-cents, currency)}` : "settled"
+
+fn initial(name: string): string = name.trim() == "" ? "?" : name.trim().slice(0, 1).toUpperCase()
+
+fn expenseTitle(xs: Expense[], id: string): string = match first(xs.filter(x => x.id == id)) { case some(x) => x.description, case none => "" }
+
+fn expenseAmount(xs: Expense[], id: string): string = match first(xs.filter(x => x.id == id)) { case some(x) => (x.amount / 100).toString(), case none => "" }
+
+fn expenseDate(xs: Expense[], id: string): string = match first(xs.filter(x => x.id == id)) { case some(x) => x.date.slice(0, 10), case none => "" }
+
+fn expensePayer(xs: Expense[], id: string): string = match first(xs.filter(x => x.id == id)) { case some(x) => x.payerId, case none => "" }
+
+fn expensePeople(xs: Expense[], id: string): string[] = match first(xs.filter(x => x.id == id)) { case some(x) => x.participants, case none => [] }
+
+fn amountValue(text: string): number = match parseNumber(text) { case some(n) => n, case none => 0 }

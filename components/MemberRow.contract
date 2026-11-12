@@ -1,0 +1,11 @@
+use Badge from "exact:content"
+use Member from "../lib/shapes.contract"
+
+component MemberRow
+  props
+    member: Member
+  view
+    row testId=`member-${member.id}`
+      text member.name flex=1 min-width=0
+      if member.role == "admin"
+        Badge(label="Admin", tint=none)

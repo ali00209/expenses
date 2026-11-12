@@ -1,0 +1,14 @@
+component JoinFields
+  props
+    code: string
+    onCode: action
+  view
+    column padding=20 gap=16 box-sizing="border-box"
+      input value=code
+        input=onCode
+        placeholder="Invite code"
+        aria-label="Invite code"
+        autocomplete="off"
+        testId="join-code"
+      text "Ask an admin for the group's six-character code." font="-exact-footnote"
+        color="text.secondary"

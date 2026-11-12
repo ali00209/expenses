@@ -1,0 +1,37 @@
+use GroupView from "../lib/shapes.contract"
+use Bootstrap from "../lib/shapes.contract"
+
+component GroupMenu
+  props
+    detail: GroupView
+    boot: Bootstrap
+    onRefresh: action
+    onAddMember: action
+    onLeaveDemo: action
+  view
+    column id="group-menu" popover="auto" role="menu" aria-label="Group options"
+      button press=onRefresh
+        popovertarget="group-menu"
+        popovertargetaction="hide"
+        role="menuitem"
+        testId="menu-refresh"
+        text "Refresh"
+      if detail.canManage and not boot.demo
+        button press=onAddMember
+          popovertarget="group-menu"
+          popovertargetaction="hide"
+          role="menuitem"
+          testId="menu-add-member"
+          text "Add member"
+      row
+        text `Invite code ${detail.code}` font="-exact-footnote"
+          color="text.secondary"
+          testId="invite-code"
+      if boot.demo
+        button press=onLeaveDemo
+          popovertarget="group-menu"
+          popovertargetaction="hide"
+          role="menuitem"
+          destructive=true
+          testId="menu-leave-demo"
+          text "Leave demo"

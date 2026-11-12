@@ -1,0 +1,30 @@
+component SyncBannerRows
+  props
+    liveState: string
+    syncLabel: string
+    pending: number
+    failed: number
+    error: string
+    canSync: bool
+    onSync: action
+  view
+    row testId="sync-banner"
+      image (liveState == "live" ? "symbol:checkmark" : liveState == "offline" ? "symbol:alert" : liveState == "auth" ? "symbol:person" : "symbol:refresh")
+      column flex=1 min-width=0
+        text syncLabel testId="sync-label"
+        if pending > 0
+          text `${pending} ${pending == 1 ? "change" : "changes"} waiting to sync` font="-exact-footnote"
+            color="text.secondary"
+            testId="sync-pending"
+        if failed > 0
+          text `${failed} ${failed == 1 ? "change needs" : "changes need"} attention` font="-exact-footnote"
+            color="accent.warning"
+            testId="sync-failed"
+      if canSync
+        button press=onSync aria-label="Sync now" testId="sync-now"
+          image "symbol:refresh"
+    if error != ""
+      row
+        text error color="accent.danger"
+          font="-exact-footnote"
+          testId="sync-error"

@@ -1,0 +1,36 @@
+use GroupView from "../lib/shapes.contract"
+use TransferRow from "./TransferRow.contract"
+
+component SettleContent
+  props
+    detail: GroupView
+    userId: string
+    onPay: action
+  view
+    section
+      column padding=16
+        gap=4
+        background-color="surface.card"
+        border-radius=16
+        text "Suggested payments" role="heading" aria-level=3
+        text "The fewest transfers that clear every balance." font="-exact-footnote"
+          color="text.secondary"
+    if detail.transfers.length == 0
+      section
+        row
+          column gap=4
+            text "Everyone is settled up"
+            text "No payments are needed right now." font="-exact-footnote"
+              color="text.secondary"
+    else
+      section
+        for t in detail.transfers key=`${t.fromId}-${t.toId}`
+          TransferRow(
+            transfer=t,
+            currency=detail.currency,
+            canPay=(detail.canManage or t.fromId == userId),
+            onPay=onPay(t.fromId, t.toId, t.amount)
+          )
+    section
+      text "Payments are saved on this device first and sync in the background." font="-exact-footnote"
+        color="text.secondary"

@@ -1,0 +1,42 @@
+use SyncStatus from "../lib/shapes.contract"
+
+component SyncContent
+  props
+    sync: SyncStatus
+    syncLabel: string
+    liveState: string
+    canSync: bool
+    hasFailed: bool
+    onSync: action
+    onDiscard: action
+  view
+    section
+      row
+        text "Status" flex=1
+        text syncLabel testId="sync-state"
+      row
+        text "Waiting to upload" flex=1
+        text `${sync.pending}` font-variant-numeric="tabular-nums"
+          testId="sync-pending-count"
+      if sync.failed > 0
+        row
+          text "Needs attention" flex=1
+          text `${sync.failed}` font-variant-numeric="tabular-nums"
+            color="accent.warning"
+            testId="sync-failed-count"
+      row
+        text "Last sync" flex=1
+        text (sync.lastSynced == "" ? "Not yet" : sync.lastSynced) testId="sync-last"
+      row
+        text "Connection" flex=1
+        text (liveState == "live" ? "Live" : liveState == "syncing" ? "Connecting…" : liveState == "auth" ? "Sign in again" : "Offline") testId="sync-feed"
+      if sync.error != ""
+        row
+          text sync.error color="accent.danger" testId="sync-detail-error"
+    if canSync
+      section
+        button press=onSync testId="sync-now-2"
+          text "Sync now"
+        if hasFailed
+          button press=onDiscard destructive=true testId="discard-failed"
+            text "Discard changes that can't sync"

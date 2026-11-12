@@ -1,0 +1,22 @@
+component MemberFields
+  props
+    email: string
+    name: string
+    onEmail: action
+    onName: action
+  view
+    column padding=20 gap=16 box-sizing="border-box"
+      input value=email
+        input=onEmail
+        placeholder="Email"
+        aria-label="Member email"
+        type="email"
+        autocomplete="email"
+        testId="member-email"
+      input value=name
+        input=onName
+        placeholder="Name (optional)"
+        aria-label="Member name"
+        testId="member-name"
+      text "They will see the group after their next sync." font="-exact-footnote"
+        color="text.secondary"

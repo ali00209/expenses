@@ -1,0 +1,20 @@
+use Transfer from "../lib/shapes.contract"
+use money from "../lib/format.contract"
+
+component TransferRow
+  props
+    transfer: Transfer
+    currency: string
+    canPay: bool
+    onPay: action
+  view
+    row testId=`transfer-${transfer.fromId}-${transfer.toId}`
+      column flex=1 min-width=0 gap=2
+        text `${transfer.fromName} pays ${transfer.toName}`
+        text money(transfer.amount, currency) font-weight=600
+          font-variant-numeric="tabular-nums"
+      button press=onPay
+        buttonStyle="bordered"
+        disabled=(not canPay)
+        testId=`pay-${transfer.fromId}-${transfer.toId}`
+        text "Mark paid"

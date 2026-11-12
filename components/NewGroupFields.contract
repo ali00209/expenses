@@ -1,0 +1,26 @@
+component NewGroupFields
+  props
+    name: string
+    currency: string
+    onName: action
+    onCurrency: action
+  view
+    column padding=20 gap=16 box-sizing="border-box"
+      input value=name
+        input=onName
+        placeholder="Group name"
+        aria-label="Group name"
+        testId="group-name"
+      column gap=6
+        text "Currency" font="-exact-footnote" color="text.secondary"
+        select value=currency
+          change=onCurrency
+          aria-label="Currency"
+          testId="group-currency"
+          option "PKR — Pakistani rupee" value="PKR"
+          option "USD — US dollar" value="USD"
+          option "EUR — Euro" value="EUR"
+          option "GBP — British pound" value="GBP"
+          option "INR — Indian rupee" value="INR"
+      text "You will be the group's first admin." font="-exact-footnote"
+        color="text.secondary"

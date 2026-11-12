@@ -1,0 +1,45 @@
+use Bootstrap from "../lib/shapes.contract"
+
+component AccountMenu
+  props
+    boot: Bootstrap
+    onLeaveDemo: action
+    onSync: action
+    onSignOut: action
+    onSignIn: action
+  view
+    column id="account-menu" popover="auto" role="menu" aria-label="Account"
+      if boot.demo
+        row
+          text "Demo mode" font-weight=600
+        button press=onLeaveDemo
+          popovertarget="account-menu"
+          popovertargetaction="hide"
+          role="menuitem"
+          testId="leave-demo"
+          text "Leave demo"
+      else if boot.signedIn
+        row
+          column gap=2
+            text boot.name
+            text boot.email font="-exact-footnote" color="text.secondary"
+        button press=onSync
+          popovertarget="account-menu"
+          popovertargetaction="hide"
+          role="menuitem"
+          testId="menu-sync"
+          text "Sync now"
+        button press=onSignOut
+          popovertarget="account-menu"
+          popovertargetaction="hide"
+          role="menuitem"
+          destructive=true
+          testId="sign-out"
+          text "Sign out"
+      else
+        button press=onSignIn
+          popovertarget="account-menu"
+          popovertargetaction="hide"
+          role="menuitem"
+          testId="menu-sign-in"
+          text "Sign in"

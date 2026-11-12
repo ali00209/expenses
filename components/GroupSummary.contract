@@ -1,0 +1,34 @@
+use GroupView from "../lib/shapes.contract"
+use netText from "../lib/format.contract"
+
+component GroupSummary
+  props
+    detail: GroupView
+    canSettle: bool
+    onSettle: action
+    onAdd: action
+  view
+    column padding=16
+      gap=10
+      background-color="surface.grouped"
+      border-radius=16
+      testId="group-summary"
+      row
+        column flex=1 gap=2
+          text "Your balance" font="-exact-footnote" color="text.secondary"
+          text netText(detail.myNet, detail.currency) role="heading"
+            aria-level=3
+            testId="my-balance"
+        column align-items="flex-end" gap=2
+          text `${detail.expenseCount} ${detail.expenseCount == 1 ? "expense" : "expenses"}` font="-exact-footnote"
+            color="text.secondary"
+            testId="expense-count"
+          text detail.currency font="-exact-caption1" color="text.secondary"
+      row gap=8
+        button press=onSettle
+          buttonStyle="filled"
+          disabled=(not canSettle)
+          testId="settle"
+          text "Settle up"
+        button press=onAdd buttonStyle="bordered" testId="add-expense-2"
+          text "Add expense"

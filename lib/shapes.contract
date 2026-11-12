@@ -1,0 +1,122 @@
+shape Group
+  id: string
+  name: string
+  currency: string
+  code: string
+  role: string
+  memberCount: number
+  expenseCount: number
+  myNet: number
+  createdAt: string
+
+shape Member
+  id: string
+  name: string
+  email: string
+  role: string
+  net: number
+
+shape Expense
+  id: string
+  description: string
+  amount: number
+  currency: string
+  payerId: string
+  payerName: string
+  date: string
+  dateLabel: string
+  participants: string[]
+  participantCount: number
+  createdById: string
+  canEdit: bool
+
+shape Balance
+  id: string
+  name: string
+  net: number
+
+shape Transfer
+  fromId: string
+  fromName: string
+  toId: string
+  toName: string
+  amount: number
+
+shape Activity
+  id: string
+  actorName: string
+  message: string
+  when: string
+
+shape GroupView
+  id: string
+  name: string
+  currency: string
+  code: string
+  role: string
+  createdAt: string
+  members: Member[]
+  expenses: Expense[]
+  balances: Balance[]
+  transfers: Transfer[]
+  activity: Activity[]
+  myNet: number
+  myName: string
+  expenseCount: number
+  canManage: bool
+
+shape Bootstrap
+  signedIn: bool
+  demo: bool
+  userId: string
+  name: string
+  email: string
+  pending: number
+  mode: string
+  message: string
+
+shape SyncStatus
+  state: string
+  pending: number
+  failed: number
+  error: string
+  lastSynced: string
+  expiresIn: number
+  demo: bool
+
+shape AuthReply
+  ok: bool
+  error: string
+  name: string
+  email: string
+
+shape JoinReply
+  ok: bool
+  error: string
+  groupId: string
+
+shape SaveReply
+  ok: bool
+  error: string
+  id: string
+
+shape SyncReply
+  applied: number
+  uploaded: number
+  pending: number
+  state: string
+  error: string
+
+shape SessionReply
+  ok: bool
+  refreshed: bool
+  error: string
+
+shape SyncFeed
+  state: string
+  lines: number
+  expiresIn: number
+
+shape Time
+  epochAtZero: number
+  utcOffset: number

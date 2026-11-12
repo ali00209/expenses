@@ -1,0 +1,18 @@
+component Toast
+  props
+    message: string
+    onDismiss: action
+  view
+    row id="toast"
+      position="absolute"
+      bottom=16
+      left=16
+      right=16
+      padding=12
+      gap=12
+      background-color="surface.grouped"
+      border-radius=8
+      testId="toast"
+      text message color="text.primary" flex=1
+      button press=onDismiss testId="dismiss-toast"
+        text "Dismiss"

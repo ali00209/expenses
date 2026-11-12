@@ -1,0 +1,24 @@
+use Expense from "../lib/shapes.contract"
+use money from "../lib/format.contract"
+
+component ExpenseRow
+  props
+    expense: Expense
+    isFirst: bool
+    onEdit: action
+  view
+    row testId=`expense-${expense.id}`
+      column flex=1 min-width=0 gap=2
+        text expense.description
+        text `${expense.payerName} paid · ${expense.dateLabel}` font="-exact-footnote"
+          color="text.secondary"
+      column align-items="flex-end" gap=2
+        text money(expense.amount, expense.currency) font-variant-numeric="tabular-nums"
+          testId=`expense-amount-${expense.id}`
+        text `${expense.participantCount} ${expense.participantCount == 1 ? "person" : "people"}` font="-exact-caption2"
+          color="text.secondary"
+      if expense.canEdit
+        button press=onEdit
+          aria-label=`Edit ${expense.description}`
+          testId=(isFirst ? "edit-first" : `edit-${expense.id}`)
+          image "symbol:pencil"

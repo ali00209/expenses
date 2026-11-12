@@ -1,4 +1,61 @@
 tamber brand
 
+axes
+  dark-style = black | dim under scheme=dark
+
 theme
-    AccentColor = #2563EB
+  // Core Surfaces
+  surface.page = light-dark(#ffffff, #000000)
+    when dark-style=dim: light-dark(#ffffff, #15202b)
+  surface.card = light-dark(#f1f3f5, #16181c)
+    when dark-style=dim: light-dark(#f1f3f5, #1e2732)
+  surface.grouped = light-dark(#f2f2f7, #1c1c1e)
+
+  // Text & Labels
+  text.primary = light-dark(#0f1419, #e7e9ea)
+    when dark-style=dim: light-dark(#0f1419, #f7f9f9)
+  text.secondary = light-dark(#536471, #8b98a5)
+  text.inverse = light-dark(#ffffff, #000000)
+
+  // Brand & Accent Colors
+  accent.primary = light-dark(#007aff, #0a84ff)
+  accent.success = light-dark(#34c759, #30d158)
+  accent.danger = light-dark(#ff3b30, #ff453a)
+  accent.warning = light-dark(#ff9500, #ff9f0a)
+
+  // Components
+  button.primary.bg = light-dark(#007aff, #0a84ff)
+  button.primary.text = light-dark(#ffffff, #ffffff)
+  button.secondary.bg = light-dark(#e5e5ea, #2c2c2e)
+  button.secondary.text = light-dark(#000000, #ffffff)
+
+  // Borders & Separators
+  border.default = light-dark(#c6c6c8, #38383a)
+  separator = light-dark(#e5e5ea, #38383a)
+
+  // Overlays
+  overlay.scrim = light-dark(rgba(0,0,0,0.4), rgba(0,0,0,0.6))
+
+  // Typography: simple sizes only (no composite font shorthand)
+  font.size.body = 1rem
+  font.size.heading = 1.5rem
+  font.size.caption = 0.875rem
+  font.weight.normal = 400
+  font.weight.bold = 700
+
+  // Spacing Scale
+  space.xs = 4px
+  space.sm = 8px
+  space.md = 16px
+  space.lg = 24px
+  space.xl = 32px
+
+  // Border Radius
+  radius.sm =0px
+  radius.md =0px
+  radius.lg = 0px
+  radius.pill = 0px
+
+  // Opacity
+  opacity.disabled = 0.5
+  opacity.muted = 0.7

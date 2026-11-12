@@ -1,0 +1,53 @@
+component AuthCard
+  props
+    mode: string
+    email: string
+    password: string
+    name: string
+    error: string
+    busy: bool
+    onEmail: action
+    onPassword: action
+    onName: action
+    onSubmit: action
+    onToggleMode: action
+  view
+    column background-color="surface.card"
+      border-radius=20
+      padding=20
+      gap=12
+      width="100%"
+      box-sizing="border-box"
+      text (mode == "signin" ? "Sign in to sync" : "Create your account") role="heading"
+        aria-level=3
+      input value=email
+        input=onEmail
+        placeholder="Email"
+        aria-label="Email"
+        type="email"
+        autocomplete="email"
+        testId="email"
+      input type="password"
+        value=password
+        input=onPassword
+        placeholder="Password"
+        aria-label="Password"
+        autocomplete="current-password"
+        testId="password"
+      if mode == "signup"
+        input value=name
+          input=onName
+          placeholder="Your name"
+          aria-label="Your name"
+          testId="auth-name"
+      if error != ""
+        text error color="accent.danger"
+          font="-exact-footnote"
+          testId="auth-error"
+      button press=onSubmit
+        buttonStyle="filled"
+        disabled=(email.trim() == "" or password == "" or busy)
+        testId="sign-in"
+        text (mode == "signin" ? "Sign in" : "Create account")
+      button press=onToggleMode testId="toggle-auth"
+        text (mode == "signin" ? "Create an account" : "I already have an account")

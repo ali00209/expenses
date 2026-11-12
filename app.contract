@@ -1,139 +1,39 @@
-use Badge from "exact:content"
-
-shape Group
-  id: string
-  name: string
-  currency: string
-  code: string
-  role: string
-  memberCount: number
-  expenseCount: number
-  myNet: number
-  createdAt: string
-
-shape Member
-  id: string
-  name: string
-  email: string
-  role: string
-  net: number
-
-shape Expense
-  id: string
-  description: string
-  amount: number
-  currency: string
-  payerId: string
-  payerName: string
-  date: string
-  dateLabel: string
-  participants: string[]
-  participantCount: number
-  createdById: string
-  canEdit: bool
-
-shape Balance
-  id: string
-  name: string
-  net: number
-
-shape Transfer
-  fromId: string
-  fromName: string
-  toId: string
-  toName: string
-  amount: number
-
-shape Activity
-  id: string
-  actorName: string
-  message: string
-  when: string
-
-shape GroupView
-  id: string
-  name: string
-  currency: string
-  code: string
-  role: string
-  createdAt: string
-  members: Member[]
-  expenses: Expense[]
-  balances: Balance[]
-  transfers: Transfer[]
-  activity: Activity[]
-  myNet: number
-  myName: string
-  expenseCount: number
-  canManage: bool
-
-shape Bootstrap
-  signedIn: bool
-  demo: bool
-  userId: string
-  name: string
-  email: string
-  pending: number
-  mode: string
-  message: string
-
-shape SyncStatus
-  state: string
-  pending: number
-  failed: number
-  error: string
-  lastSynced: string
-  expiresIn: number
-  demo: bool
-
-shape AuthReply
-  ok: bool
-  error: string
-  name: string
-  email: string
-
-shape JoinReply
-  ok: bool
-  error: string
-  groupId: string
-
-shape SaveReply
-  ok: bool
-  error: string
-  id: string
-
-shape SyncReply
-  applied: number
-  uploaded: number
-  pending: number
-  state: string
-  error: string
-
-shape SessionReply
-  ok: bool
-  refreshed: bool
-  error: string
-
-shape SyncFeed
-  state: string
-  lines: number
-  expiresIn: number
-
-shape Time
-  epochAtZero: number
-  utcOffset: number
-
-fn abs(n: number): number = n < 0 ? -n : n
-fn money(cents: number, currency: string): string = currency == "USD" ? formatNumber(cents / 100, "currency", "USD") : currency == "EUR" ? formatNumber(cents / 100, "currency", "EUR") : currency == "GBP" ? formatNumber(cents / 100, "currency", "GBP") : currency == "INR" ? formatNumber(cents / 100, "currency", "INR") : `${currency} ${formatNumber(cents / 100, "decimal")}`
-fn netText(cents: number, currency: string): string = cents > 0 ? `You are owed ${money(cents, currency)}` : cents < 0 ? `You owe ${money(-cents, currency)}` : "You are settled up"
-fn balanceText(cents: number, currency: string): string = cents > 0 ? `gets back ${money(cents, currency)}` : cents < 0 ? `owes ${money(-cents, currency)}` : "settled"
-fn initial(name: string): string = name.trim() == "" ? "?" : name.trim().slice(0, 1).toUpperCase()
-fn expenseTitle(xs: Expense[], id: string): string = match first(xs.filter(x => x.id == id)) { case some(x) => x.description, case none => "" }
-fn expenseAmount(xs: Expense[], id: string): string = match first(xs.filter(x => x.id == id)) { case some(x) => (x.amount / 100).toString(), case none => "" }
-fn expenseDate(xs: Expense[], id: string): string = match first(xs.filter(x => x.id == id)) { case some(x) => x.date.slice(0, 10), case none => "" }
-fn expensePayer(xs: Expense[], id: string): string = match first(xs.filter(x => x.id == id)) { case some(x) => x.payerId, case none => "" }
-fn expensePeople(xs: Expense[], id: string): string[] = match first(xs.filter(x => x.id == id)) { case some(x) => x.participants, case none => [] }
-fn amountValue(text: string): number = match parseNumber(text) { case some(n) => n, case none => 0 }
+use Bootstrap from "./lib/shapes.contract"
+use Time from "./lib/shapes.contract"
+use Group from "./lib/shapes.contract"
+use GroupView from "./lib/shapes.contract"
+use SyncStatus from "./lib/shapes.contract"
+use SyncFeed from "./lib/shapes.contract"
+use AuthReply from "./lib/shapes.contract"
+use JoinReply from "./lib/shapes.contract"
+use SaveReply from "./lib/shapes.contract"
+use SyncReply from "./lib/shapes.contract"
+use SessionReply from "./lib/shapes.contract"
+use abs from "./lib/format.contract"
+use money from "./lib/format.contract"
+use expenseTitle from "./lib/format.contract"
+use expenseAmount from "./lib/format.contract"
+use expenseDate from "./lib/format.contract"
+use expensePayer from "./lib/format.contract"
+use expensePeople from "./lib/format.contract"
+use amountValue from "./lib/format.contract"
+use Toast from "./components/Toast.contract"
+use AuthCard from "./components/AuthCard.contract"
+use SyncBannerRows from "./components/SyncBannerRows.contract"
+use GroupSummary from "./components/GroupSummary.contract"
+use ExpenseRow from "./components/ExpenseRow.contract"
+use BalanceRow from "./components/BalanceRow.contract"
+use MemberRow from "./components/MemberRow.contract"
+use ActivityRow from "./components/ActivityRow.contract"
+use GroupsList from "./components/GroupsList.contract"
+use ExpenseForm from "./components/ExpenseForm.contract"
+use SettleContent from "./components/SettleContent.contract"
+use SyncContent from "./components/SyncContent.contract"
+use NewGroupFields from "./components/NewGroupFields.contract"
+use JoinFields from "./components/JoinFields.contract"
+use MemberFields from "./components/MemberFields.contract"
+use AccountMenu from "./components/AccountMenu.contract"
+use GroupMenu from "./components/GroupMenu.contract"
 
 routes nav
   home "/"
@@ -147,6 +47,7 @@ routes nav
     sync "/sync"
 
 component Tally
+  // ============ STATE ============
   state now = 0
   state authMode = "signin"
   state email = ""
@@ -171,12 +72,16 @@ component Tally
   state lastReconnect = 0
   state lastSessionCheck = 0
   state lastUploadError = ""
+
+  // ============ RESOURCES ============
   resource boot = bootstrap() as shape Bootstrap else empty()
   resource time = exactTime() as shape Time
   resource groups = groupList() as shape Group[] else empty()
   resource detail = groupView(groupId) as shape GroupView else empty()
   resource sync = syncStatus() as shape SyncStatus else empty()
   resource feed = syncStream(syncEpoch) as shape SyncFeed else empty()
+
+  // ============ MUTATIONS ============
   mutation authDone as shape AuthReply refreshes boot, groups, sync then afterAuth
   mutation demoDone as shape AuthReply refreshes boot, groups, sync then afterDemo
   mutation groupMade as shape JoinReply refreshes boot, groups, sync then afterCreate
@@ -189,6 +94,8 @@ component Tally
   mutation uploaded as shape SyncReply then afterUpload
   mutation sessionChecked as shape SessionReply refreshes boot, sync then afterSession
   mutation discarded as shape SaveReply refreshes sync, boot then afterDiscard
+
+  // ============ DERIVE ============
   derive current = top(nav)
   derive groupId = (current.name == "group" or current.name == "add" or current.name == "edit" or current.name == "settle" or current.name == "member") ? current.params.id : ""
   derive expenseId = current.name == "edit" ? current.params.expenseId : ""
@@ -220,6 +127,7 @@ component Tally
   derive splitPreview = splitCount > 0 and amountValue(formAmount) > 0 ? `${money(round(amountValue(formAmount) * 100 / splitCount), detail.currency)} each` : "Choose who shares it"
   derive canSaveExpense = formDescription.trim() != "" and formAmount.trim() != "" and formParticipants.length > 0 and not pending(expenseSaved)
 
+  // ============ TASKS ============
   task clock mount
     every(15000, tick)
   task clockStart mount
@@ -237,6 +145,8 @@ component Tally
   task hideToast when toast != "" key=toastUntil
     after(5000, clearToast)
 
+  // ============ ACTIONS ============
+  // (identical to the version in the previous message — unchanged)
   action tick
     now = performanceNow()
   action clearToast
@@ -459,11 +369,24 @@ component Tally
       lastSessionCheck = now
       send sessionChecked = ensureSession(nowMs)
 
+  // ============ VIEW ============
   view
-    main navigationKey=`${top(nav).id}` navigationBack="goBack" navigate=follow width="100%" height="100%" flex=1 min-height=0 testId="root"
+    main navigationKey=`${top(nav).id}`
+      navigationBack="goBack"
+      navigate=follow
+      width="100%"
+      height="100%"
+      flex=1
+      min-height=0
+      testId="root"
       for e in stack(nav) key=e.id
         if e.name == "home"
-          column navigationKey=`${e.id}` navigationScroll=(boot.signedIn or boot.demo ? "groups" : "home-scroll") position="absolute" inset=0 display="flex" flex-direction="column"
+          column navigationKey=`${e.id}`
+            navigationScroll=(boot.signedIn or boot.demo ? "groups" : "home-scroll")
+            position="absolute"
+            inset=0
+            display="flex"
+            flex-direction="column"
             header
               text "Tally" role="heading" aria-level=1 flex=1
               button popovertarget="account-menu" aria-label="Account" testId="account"
@@ -475,70 +398,58 @@ component Tally
               scroll id="home-scroll" flex=1 min-height=0
                 column padding=24 gap=18 align-items="center"
                   column gap=6 align-items="center"
-                    text "Tally" role="heading" aria-level=2 font="-exact-large-title"
-                    text "Split expenses with friends. Every change is saved on this device first." text-align="center" color="-exact-secondary-label"
-                  column background-color="-exact-secondary-background" border-radius=20 padding=20 gap=12 width="100%" box-sizing="border-box"
-                    text (authMode == "signin" ? "Sign in to sync" : "Create your account") role="heading" aria-level=3
-                    input value=email input=setEmail placeholder="Email" aria-label="Email" type="email" autocomplete="email" testId="email"
-                    input type="password" value=password input=setPassword placeholder="Password" aria-label="Password" autocomplete="current-password" testId="password"
-                    if authMode == "signup"
-                      input value=authName input=setAuthName placeholder="Your name" aria-label="Your name" testId="auth-name"
-                    if authError != ""
-                      text authError color="-exact-system-red" font="-exact-footnote" testId="auth-error"
-                    button press=submitAuth buttonStyle="filled" disabled=(email.trim() == "" or password == "" or pending(authDone)) testId="sign-in"
-                      text (authMode == "signin" ? "Sign in" : "Create account")
-                    button press=toggleAuthMode testId="toggle-auth"
-                      text (authMode == "signin" ? "Create an account" : "I already have an account")
-                  button press=startDemo buttonStyle="bordered" disabled=pending(demoDone) testId="demo"
+                    text "Welcome" role="heading" aria-level=2 font="-exact-large-title"
+                    text "Split expenses with friends. Every change is saved on this device first." text-align="center"
+                      color="text.secondary"
+                  AuthCard(
+                    mode=authMode,
+                    email=email,
+                    password=password,
+                    name=authName,
+                    error=authError,
+                    busy=pending(authDone),
+                    onEmail=setEmail,
+                    onPassword=setPassword,
+                    onName=setAuthName,
+                    onSubmit=submitAuth,
+                    onToggleMode=toggleAuthMode
+                  )
+                  button press=startDemo
+                    buttonStyle="bordered"
+                    disabled=pending(demoDone)
+                    testId="demo"
                     text "Try the demo"
-                  text "The demo works offline. Sign in to sync with your friends." font="-exact-footnote" color="-exact-secondary-label" text-align="center"
+                  text "The demo works offline. Sign in to sync with your friends." font="-exact-footnote"
+                    color="text.secondary"
+                    text-align="center"
             else
               list id="groups" appearance="auto" listStyle="inset-grouped" flex=1 min-height=0
                 section
-                  row testId="sync-banner"
-                    image (liveState == "live" ? "symbol:checkmark" : liveState == "offline" ? "symbol:alert" : liveState == "auth" ? "symbol:person" : "symbol:refresh")
-                    column flex=1 min-width=0
-                      text syncLabel testId="sync-label"
-                      if sync.pending > 0
-                        text `${sync.pending} ${sync.pending == 1 ? "change" : "changes"} waiting to sync` font="-exact-footnote" color="-exact-secondary-label" testId="sync-pending"
-                      if sync.failed > 0
-                        text `${sync.failed} ${sync.failed == 1 ? "change needs" : "changes need"} attention` font="-exact-footnote" color="-exact-system-orange" testId="sync-failed"
-                    if boot.signedIn and not boot.demo
-                      button press=syncNow aria-label="Sync now" testId="sync-now"
-                        image "symbol:refresh"
-                  if sync.error != ""
-                    row
-                      text sync.error color="-exact-system-red" font="-exact-footnote" testId="sync-error"
-                section
-                  header
-                    text "Groups"
-                  if groups.length == 0
-                    row
-                      column flex=1 gap=4
-                        text "No groups yet"
-                        text "Create one or join with an invite code." font="-exact-footnote" color="-exact-secondary-label"
-                  for g in groups key=g.id
-                    link href=path("group", g.id) testId=`group-${g.id}`
-                      column flex=1 min-width=0 gap=2
-                        text g.name
-                        text `${g.memberCount} ${g.memberCount == 1 ? "member" : "members"} · ${g.expenseCount} ${g.expenseCount == 1 ? "expense" : "expenses"}` font="-exact-footnote" color="-exact-secondary-label"
-                      column align-items="flex-end" gap=2
-                        text (g.myNet > 0 ? "Owed to you" : g.myNet < 0 ? "You owe" : "Settled") font="-exact-caption1" color="-exact-secondary-label"
-                        text (g.myNet == 0 ? "" : money(abs(g.myNet), g.currency)) font-weight=600 font-variant-numeric="tabular-nums" testId=`group-net-${g.id}`
-                      image "symbol:forward-chevron"
-                section
-                  button press=openNewGroup testId="new-group"
-                    image "symbol:add"
-                    text "New group"
-                  button press=openJoin testId="join-group"
-                    image "symbol:people"
-                    text "Join with a code"
+                  SyncBannerRows(
+                    liveState=liveState,
+                    syncLabel=syncLabel,
+                    pending=sync.pending,
+                    failed=sync.failed,
+                    error=sync.error,
+                    canSync=(boot.signedIn and not boot.demo),
+                    onSync=syncNow
+                  )
+                GroupsList(groups=groups, onNew=openNewGroup, onJoin=openJoin)
+
         if e.name == "group"
-          column navigationKey=`${e.id}` navigationScroll=`group-scroll-${e.id}` position="absolute" inset=0 display="flex" flex-direction="column"
+          column navigationKey=`${e.id}`
+            navigationScroll=`group-scroll-${e.id}`
+            position="absolute"
+            inset=0
+            display="flex"
+            flex-direction="column"
             header
-              text (detail.name == "" ? "Group" : detail.name) role="heading" aria-level=2 flex=1 testId="group-title"
+              text (detail.name == "" ? "Group" : detail.name) role="heading"
+                aria-level=2
+                flex=1
+                testId="group-title"
               button press=openAdd aria-label="Add expense" testId="add-expense"
-                image "symbol:plus"
+                image "symbol:add"
               button popovertarget="group-menu" aria-label="Group options" testId="group-menu"
                 image "symbol:more"
             if detail.id == ""
@@ -546,24 +457,24 @@ component Tally
                 if pending(detail)
                   progress aria-label="Loading group"
                 else
-                  text "This group isn't on this device yet." color="-exact-secondary-label" text-align="center"
-                  text "It will appear when sync finishes." font="-exact-footnote" color="-exact-secondary-label" text-align="center"
+                  text "This group isn't on this device yet." color="text.secondary"
+                    text-align="center"
+                  text "It will appear when sync finishes." font="-exact-footnote"
+                    color="text.secondary"
+                    text-align="center"
             else
-              list id=`group-scroll-${e.id}` appearance="auto" listStyle="inset-grouped" flex=1 min-height=0
+              list id=`group-scroll-${e.id}`
+                appearance="auto"
+                listStyle="inset-grouped"
+                flex=1
+                min-height=0
                 section
-                  column padding=16 gap=10 background-color="-exact-secondary-background" border-radius=16 testId="group-summary"
-                    row
-                      column flex=1 gap=2
-                        text "Your balance" font="-exact-footnote" color="-exact-secondary-label"
-                        text netText(detail.myNet, detail.currency) role="heading" aria-level=3 testId="my-balance"
-                      column align-items="flex-end" gap=2
-                        text `${detail.expenseCount} ${detail.expenseCount == 1 ? "expense" : "expenses"}` font="-exact-footnote" color="-exact-secondary-label" testId="expense-count"
-                        text detail.currency font="-exact-caption1" color="-exact-secondary-label"
-                    row gap=8
-                      button press=openSettle buttonStyle="filled" disabled=(detail.transfers.length == 0) testId="settle"
-                        text "Settle up"
-                      button press=openAdd buttonStyle="bordered" testId="add-expense-2"
-                        text "Add expense"
+                  GroupSummary(
+                    detail=detail,
+                    canSettle=(detail.transfers.length > 0),
+                    onSettle=openSettle,
+                    onAdd=openAdd
+                  )
                 section
                   header
                     text "Expenses"
@@ -571,18 +482,10 @@ component Tally
                     row
                       column gap=4
                         text "No expenses yet"
-                        text "Add the first one to start the ledger." font="-exact-footnote" color="-exact-secondary-label"
+                        text "Add the first one to start the ledger." font="-exact-footnote"
+                          color="text.secondary"
                   for x, i in detail.expenses key=x.id
-                    row testId=`expense-${x.id}`
-                      column flex=1 min-width=0 gap=2
-                        text x.description
-                        text `${x.payerName} paid · ${x.dateLabel}` font="-exact-footnote" color="-exact-secondary-label"
-                      column align-items="flex-end" gap=2
-                        text money(x.amount, x.currency) font-variant-numeric="tabular-nums" testId=`expense-amount-${x.id}`
-                        text `${x.participantCount} ${x.participantCount == 1 ? "person" : "people"}` font="-exact-caption2" color="-exact-secondary-label"
-                      if x.canEdit
-                        button press=beginEdit(x.id) aria-label=`Edit ${x.description}` testId=(i == 0 ? "edit-first" : `edit-${x.id}`)
-                          image "symbol:pencil"
+                    ExpenseRow(expense=x, isFirst=(i == 0), onEdit=beginEdit(x.id))
                 section
                   header
                     text "Balances"
@@ -590,238 +493,233 @@ component Tally
                     row
                       text "Everyone is settled up."
                   for b in detail.balances key=b.id
-                    row testId=`balance-${b.id}`
-                      text b.name flex=1 min-width=0
-                      text balanceText(b.net, detail.currency) font-variant-numeric="tabular-nums" color=(b.net > 0 ? "-exact-system-green" : b.net < 0 ? "-exact-system-red" : "-exact-secondary-label") testId=`balance-net-${b.id}`
+                    BalanceRow(balance=b, currency=detail.currency)
                 section
                   header
                     text "Members"
                   for m in detail.members key=m.id
-                    row testId=`member-${m.id}`
-                      text m.name flex=1 min-width=0
-                      if m.role == "admin"
-                        Badge(label="Admin", tint=none)
+                    MemberRow(member=m)
                 section
                   header
                     text "Activity"
                   if detail.activity.length == 0
                     row
-                      text "Nothing has happened yet." color="-exact-secondary-label"
+                      text "Nothing has happened yet." color="text.secondary"
                   for a in detail.activity key=a.id
-                    row
-                      column flex=1 min-width=0 gap=2
-                        text a.message
-                        text `${a.actorName} · ${a.when}` font="-exact-footnote" color="-exact-secondary-label"
+                    ActivityRow(activity=a)
+
         if e.name == "add"
-          column navigationKey=`${e.id}` navigationPresentation="modal" navigationDetent="fit-content large" navigationScroll=`add-scroll-${e.id}` position="absolute" inset=0 background-color="-exact-background" testId="expense-form"
+          column navigationKey=`${e.id}`
+            navigationPresentation="modal"
+            navigationDetent="fit-content large"
+            navigationScroll=`add-scroll-${e.id}`
+            position="absolute"
+            inset=0
+            background-color="surface.page"
+            testId="expense-form"
             header display="flex" align-items="center" gap=8
               button press=goBack testId="cancel-expense"
                 text "Cancel"
               text "Add expense" role="heading" aria-level=2 flex=1
-              button press=saveExpense buttonStyle="bordered-prominent" disabled=(not canSaveExpense) testId="save-expense"
+              button press=saveExpense
+                buttonStyle="bordered-prominent"
+                disabled=(not canSaveExpense)
+                testId="save-expense"
                 text "Save"
             scroll id=`add-scroll-${e.id}` flex=1 min-height=0
-              column padding=20 gap=16 box-sizing="border-box"
-                input value=formDescription input=setDescription placeholder="What was it for?" aria-label="Description" testId="expense-description"
-                row gap=8 align-items="center"
-                  input type="number" inputmode="decimal" value=formAmount input=setAmount placeholder="0.00" aria-label="Amount" testId="expense-amount" flex=1 min-width=0
-                  text detail.currency font-weight=600 color="-exact-secondary-label"
-                input type="date" value=(formDate == "" ? currentDate : formDate) change=setDate aria-label="Date" testId="expense-date"
-                column gap=6
-                  text "Paid by" font="-exact-footnote" color="-exact-secondary-label"
-                  select value=formPayer change=setPayer aria-label="Paid by" testId="expense-payer"
-                    for m in detail.members key=m.id
-                      option m.name value=m.id
-                column gap=8
-                  row
-                    text "Split between" font="-exact-footnote" color="-exact-secondary-label" flex=1
-                    button press=selectAllParticipants testId="select-all-people"
-                      text "Select all"
-                  for m in detail.members key=m.id
-                    ParticipantRow(member=m, checked=formParticipants.includes(m.id), onToggle=toggleParticipant(m.id))
-                text splitPreview font="-exact-footnote" color="-exact-secondary-label" testId="split-preview"
-                if formError != ""
-                  text formError color="-exact-system-red" font="-exact-footnote" testId="expense-error"
+              ExpenseForm(
+                currency=detail.currency,
+                currentDate=currentDate,
+                members=detail.members,
+                description=formDescription,
+                amount=formAmount,
+                date=formDate,
+                payer=formPayer,
+                participants=formParticipants,
+                error=formError,
+                preview=splitPreview,
+                showDelete=false,
+                onDescription=setDescription,
+                onAmount=setAmount,
+                onDate=setDate,
+                onPayer=setPayer,
+                onToggleParticipant=toggleParticipant,
+                onSelectAll=selectAllParticipants,
+                onDelete=removeExpenseAction
+              )
+
         if e.name == "edit"
-          column navigationKey=`${e.id}` navigationPresentation="modal" navigationDetent="fit-content large" navigationScroll=`edit-scroll-${e.id}` position="absolute" inset=0 background-color="-exact-background" testId="expense-form"
+          column navigationKey=`${e.id}`
+            navigationPresentation="modal"
+            navigationDetent="fit-content large"
+            navigationScroll=`edit-scroll-${e.id}`
+            position="absolute"
+            inset=0
+            background-color="surface.page"
+            testId="expense-form"
             header display="flex" align-items="center" gap=8
               button press=goBack testId="cancel-expense"
                 text "Cancel"
               text "Edit expense" role="heading" aria-level=2 flex=1
-              button press=saveExpense buttonStyle="bordered-prominent" disabled=(not canSaveExpense) testId="save-expense"
+              button press=saveExpense
+                buttonStyle="bordered-prominent"
+                disabled=(not canSaveExpense)
+                testId="save-expense"
                 text "Save"
             scroll id=`edit-scroll-${e.id}` flex=1 min-height=0
-              column padding=20 gap=16 box-sizing="border-box"
-                input value=formDescription input=setDescription placeholder="What was it for?" aria-label="Description" testId="expense-description"
-                row gap=8 align-items="center"
-                  input type="number" inputmode="decimal" value=formAmount input=setAmount placeholder="0.00" aria-label="Amount" testId="expense-amount" flex=1 min-width=0
-                  text detail.currency font-weight=600 color="-exact-secondary-label"
-                input type="date" value=(formDate == "" ? currentDate : formDate) change=setDate aria-label="Date" testId="expense-date"
-                column gap=6
-                  text "Paid by" font="-exact-footnote" color="-exact-secondary-label"
-                  select value=formPayer change=setPayer aria-label="Paid by" testId="expense-payer"
-                    for m in detail.members key=m.id
-                      option m.name value=m.id
-                column gap=8
-                  row
-                    text "Split between" font="-exact-footnote" color="-exact-secondary-label" flex=1
-                    button press=selectAllParticipants testId="select-all-people"
-                      text "Select all"
-                  for m in detail.members key=m.id
-                    ParticipantRow(member=m, checked=formParticipants.includes(m.id), onToggle=toggleParticipant(m.id))
-                text splitPreview font="-exact-footnote" color="-exact-secondary-label" testId="split-preview"
-                if formError != ""
-                  text formError color="-exact-system-red" font="-exact-footnote" testId="expense-error"
-                button press=removeExpenseAction destructive=true testId="delete-expense"
-                  text "Delete expense"
+              ExpenseForm(
+                currency=detail.currency,
+                currentDate=currentDate,
+                members=detail.members,
+                description=formDescription,
+                amount=formAmount,
+                date=formDate,
+                payer=formPayer,
+                participants=formParticipants,
+                error=formError,
+                preview=splitPreview,
+                showDelete=true,
+                onDescription=setDescription,
+                onAmount=setAmount,
+                onDate=setDate,
+                onPayer=setPayer,
+                onToggleParticipant=toggleParticipant,
+                onSelectAll=selectAllParticipants,
+                onDelete=removeExpenseAction
+              )
+
         if e.name == "settle"
-          column navigationKey=`${e.id}` navigationPresentation="modal" navigationDetent="fit-content large" position="absolute" inset=0 background-color="-exact-background" testId="settle-sheet"
+          column navigationKey=`${e.id}`
+            navigationPresentation="modal"
+            navigationDetent="fit-content large"
+            position="absolute"
+            inset=0
+            background-color="surface.page"
+            testId="settle-sheet"
             header display="flex" align-items="center" gap=8
               button press=goBack testId="close-settle"
                 text "Done"
               text "Settle up" role="heading" aria-level=2 flex=1
-            list id=`settle-list-${e.id}` appearance="auto" listStyle="inset-grouped" flex=1 min-height=0
-              section
-                column padding=16 gap=4 background-color="-exact-secondary-background" border-radius=16
-                  text "Suggested payments" role="heading" aria-level=3
-                  text "The fewest transfers that clear every balance." font="-exact-footnote" color="-exact-secondary-label"
-              if detail.transfers.length == 0
-                section
-                  row
-                    column gap=4
-                      text "Everyone is settled up"
-                      text "No payments are needed right now." font="-exact-footnote" color="-exact-secondary-label"
-              else
-                section
-                  for t in detail.transfers key=`${t.fromId}-${t.toId}`
-                    row testId=`transfer-${t.fromId}-${t.toId}`
-                      column flex=1 min-width=0 gap=2
-                        text `${t.fromName} pays ${t.toName}`
-                        text money(t.amount, detail.currency) font-weight=600 font-variant-numeric="tabular-nums"
-                      button press=recordTransfer(t.fromId, t.toId, t.amount) buttonStyle="bordered" disabled=(not detail.canManage and t.fromId != boot.userId) testId=`pay-${t.fromId}-${t.toId}`
-                        text "Mark paid"
-              section
-                text "Payments are saved on this device first and sync in the background." font="-exact-footnote" color="-exact-secondary-label"
+            list id=`settle-list-${e.id}`
+              appearance="auto"
+              listStyle="inset-grouped"
+              flex=1
+              min-height=0
+              SettleContent(detail=detail, userId=boot.userId, onPay=recordTransfer)
+
         if e.name == "newGroup"
-          column navigationKey=`${e.id}` navigationPresentation="modal" navigationDetent="fit-content large" navigationScroll=`new-group-scroll-${e.id}` position="absolute" inset=0 background-color="-exact-background" testId="new-group-form"
+          column navigationKey=`${e.id}`
+            navigationPresentation="modal"
+            navigationDetent="fit-content large"
+            navigationScroll=`new-group-scroll-${e.id}`
+            position="absolute"
+            inset=0
+            background-color="surface.page"
+            testId="new-group-form"
             header display="flex" align-items="center" gap=8
               button press=goBack testId="cancel-new-group"
                 text "Cancel"
               text "New group" role="heading" aria-level=2 flex=1
-              button press=createGroupAction buttonStyle="bordered-prominent" disabled=(groupName.trim() == "" or pending(groupMade)) testId="create-group"
+              button press=createGroupAction
+                buttonStyle="bordered-prominent"
+                disabled=(groupName.trim() == "" or pending(groupMade))
+                testId="create-group"
                 text "Create"
             scroll id=`new-group-scroll-${e.id}` flex=1 min-height=0
-              column padding=20 gap=16 box-sizing="border-box"
-                input value=groupName input=setGroupName placeholder="Group name" aria-label="Group name" testId="group-name"
-                column gap=6
-                  text "Currency" font="-exact-footnote" color="-exact-secondary-label"
-                  select value=groupCurrency change=setGroupCurrency aria-label="Currency" testId="group-currency"
-                    option "PKR — Pakistani rupee" value="PKR"
-                    option "USD — US dollar" value="USD"
-                    option "EUR — Euro" value="EUR"
-                    option "GBP — British pound" value="GBP"
-                    option "INR — Indian rupee" value="INR"
-                text "You will be the group's first admin." font="-exact-footnote" color="-exact-secondary-label"
+              NewGroupFields(
+                name=groupName,
+                currency=groupCurrency,
+                onName=setGroupName,
+                onCurrency=setGroupCurrency
+              )
+
         if e.name == "join"
-          column navigationKey=`${e.id}` navigationPresentation="modal" navigationDetent="fit-content large" navigationScroll=`join-scroll-${e.id}` position="absolute" inset=0 background-color="-exact-background" testId="join-form"
+          column navigationKey=`${e.id}`
+            navigationPresentation="modal"
+            navigationDetent="fit-content large"
+            navigationScroll=`join-scroll-${e.id}`
+            position="absolute"
+            inset=0
+            background-color="surface.page"
+            testId="join-form"
             header display="flex" align-items="center" gap=8
               button press=goBack testId="cancel-join"
                 text "Cancel"
               text "Join a group" role="heading" aria-level=2 flex=1
-              button press=joinGroupAction buttonStyle="bordered-prominent" disabled=(joinCode.trim() == "" or pending(groupJoined)) testId="join"
+              button press=joinGroupAction
+                buttonStyle="bordered-prominent"
+                disabled=(joinCode.trim() == "" or pending(groupJoined))
+                testId="join"
                 text "Join"
             scroll id=`join-scroll-${e.id}` flex=1 min-height=0
-              column padding=20 gap=16 box-sizing="border-box"
-                input value=joinCode input=setJoinCode placeholder="Invite code" aria-label="Invite code" autocomplete="off" testId="join-code"
-                text "Ask an admin for the group's six-character code." font="-exact-footnote" color="-exact-secondary-label"
+              JoinFields(code=joinCode, onCode=setJoinCode)
+
         if e.name == "member"
-          column navigationKey=`${e.id}` navigationPresentation="modal" navigationDetent="fit-content large" navigationScroll=`member-scroll-${e.id}` position="absolute" inset=0 background-color="-exact-background" testId="member-form"
+          column navigationKey=`${e.id}`
+            navigationPresentation="modal"
+            navigationDetent="fit-content large"
+            navigationScroll=`member-scroll-${e.id}`
+            position="absolute"
+            inset=0
+            background-color="surface.page"
+            testId="member-form"
             header display="flex" align-items="center" gap=8
               button press=goBack testId="cancel-member"
                 text "Cancel"
               text "Add member" role="heading" aria-level=2 flex=1
-              button press=addMemberAction buttonStyle="bordered-prominent" disabled=(memberEmail.trim() == "" or pending(memberAdded)) testId="add-member"
+              button press=addMemberAction
+                buttonStyle="bordered-prominent"
+                disabled=(memberEmail.trim() == "" or pending(memberAdded))
+                testId="add-member"
                 text "Add"
             scroll id=`member-scroll-${e.id}` flex=1 min-height=0
-              column padding=20 gap=16 box-sizing="border-box"
-                input value=memberEmail input=setMemberEmail placeholder="Email" aria-label="Member email" type="email" autocomplete="email" testId="member-email"
-                input value=memberName input=setMemberName placeholder="Name (optional)" aria-label="Member name" testId="member-name"
-                text "They will see the group after their next sync." font="-exact-footnote" color="-exact-secondary-label"
+              MemberFields(
+                email=memberEmail,
+                name=memberName,
+                onEmail=setMemberEmail,
+                onName=setMemberName
+              )
+
         if e.name == "sync"
-          column navigationKey=`${e.id}` navigationPresentation="modal" navigationDetent="fit-content large" position="absolute" inset=0 background-color="-exact-background" testId="sync-sheet"
+          column navigationKey=`${e.id}`
+            navigationPresentation="modal"
+            navigationDetent="fit-content large"
+            position="absolute"
+            inset=0
+            background-color="surface.page"
+            testId="sync-sheet"
             header display="flex" align-items="center" gap=8
               button press=goBack testId="close-sync"
                 text "Done"
               text "Sync" role="heading" aria-level=2 flex=1
-            list id=`sync-list-${e.id}` appearance="auto" listStyle="inset-grouped" flex=1 min-height=0
-              section
-                row
-                  text "Status" flex=1
-                  text syncLabel testId="sync-state"
-                row
-                  text "Waiting to upload" flex=1
-                  text `${sync.pending}` font-variant-numeric="tabular-nums" testId="sync-pending-count"
-                if sync.failed > 0
-                  row
-                    text "Needs attention" flex=1
-                    text `${sync.failed}` font-variant-numeric="tabular-nums" color="-exact-system-orange" testId="sync-failed-count"
-                row
-                  text "Last sync" flex=1
-                  text (sync.lastSynced == "" ? "Not yet" : sync.lastSynced) testId="sync-last"
-                row
-                  text "Connection" flex=1
-                  text (feed.state == "live" ? "Live" : feed.state == "syncing" ? "Connecting…" : feed.state == "auth" ? "Sign in again" : "Offline") testId="sync-feed"
-                if sync.error != ""
-                  row
-                    text sync.error color="-exact-system-red" testId="sync-detail-error"
-              if boot.signedIn and not boot.demo
-                section
-                  button press=syncNow testId="sync-now-2"
-                    text "Sync now"
-                  if sync.failed > 0
-                    button press=discardFailed destructive=true testId="discard-failed"
-                      text "Discard changes that can't sync"
-      column id="account-menu" popover="auto" role="menu" aria-label="Account"
-        if boot.demo
-          row
-            text "Demo mode" font-weight=600
-          button press=exitDemo popovertarget="account-menu" popovertargetaction="hide" role="menuitem" testId="leave-demo"
-            text "Leave demo"
-        else if boot.signedIn
-          row
-            column gap=2
-              text boot.name
-              text boot.email font="-exact-footnote" color="-exact-secondary-label"
-          button press=syncNow popovertarget="account-menu" popovertargetaction="hide" role="menuitem" testId="menu-sync"
-            text "Sync now"
-          button press=signOut popovertarget="account-menu" popovertargetaction="hide" role="menuitem" destructive=true testId="sign-out"
-            text "Sign out"
-        else
-          button press=toggleAuthMode popovertarget="account-menu" popovertargetaction="hide" role="menuitem" testId="menu-sign-in"
-            text "Sign in"
-      column id="group-menu" popover="auto" role="menu" aria-label="Group options"
-        button press=refreshAll popovertarget="group-menu" popovertargetaction="hide" role="menuitem" testId="menu-refresh"
-          text "Refresh"
-        if detail.canManage and not boot.demo
-          button press=openMember popovertarget="group-menu" popovertargetaction="hide" role="menuitem" testId="menu-add-member"
-            text "Add member"
-        row
-          text `Invite code ${detail.code}` font="-exact-footnote" color="-exact-secondary-label" testId="invite-code"
-        if boot.demo
-          button press=exitDemo popovertarget="group-menu" popovertargetaction="hide" role="menuitem" destructive=true testId="menu-leave-demo"
-            text "Leave demo"
-      if toast != ""
-        row id="toast" position="absolute" bottom=16 left=16 right=16 padding=12 gap=12 background-color="-exact-secondary-grouped-background" border-radius=8 testId="toast"
-          text toast color="-exact-label" flex=1
-          button press=clearToast testId="dismiss-toast"
-            text "Dismiss"
+            list id=`sync-list-${e.id}`
+              appearance="auto"
+              listStyle="inset-grouped"
+              flex=1
+              min-height=0
+              SyncContent(
+                sync=sync,
+                syncLabel=syncLabel,
+                liveState=liveState,
+                canSync=(boot.signedIn and not boot.demo),
+                hasFailed=(sync.failed > 0),
+                onSync=syncNow,
+                onDiscard=discardFailed
+              )
 
-component ParticipantRow
-  props
-    member: Member
-    checked: bool
-    onToggle: action
-  view
-    row
-      input type="checkbox" checked=checked change=onToggle aria-label=`Split with ${member.name}` testId=`participant-${member.id}`
-      text member.name flex=1 min-width=0
+      AccountMenu(
+        boot=boot,
+        onLeaveDemo=exitDemo,
+        onSync=syncNow,
+        onSignOut=signOut,
+        onSignIn=toggleAuthMode
+      )
+      GroupMenu(
+        detail=detail,
+        boot=boot,
+        onRefresh=refreshAll,
+        onAddMember=openMember,
+        onLeaveDemo=exitDemo
+      )
+      if toast != ""
+        Toast(message=toast, onDismiss=clearToast)
