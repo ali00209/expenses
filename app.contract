@@ -478,16 +478,6 @@ component Tally
                     onSettle=openSettle,
                     onAdd=openAdd
                   )
-                section
-                  row role="radiogroup" aria-label="Group sections" gap="space.xs"
-                    button role="radio" aria-checked=(groupTab == "expenses") press=setGroupTab("expenses") testId="tab-expenses"
-                      text "Expenses"
-                    button role="radio" aria-checked=(groupTab == "balances") press=setGroupTab("balances") testId="tab-balances"
-                      text "Balances"
-                    button role="radio" aria-checked=(groupTab == "members") press=setGroupTab("members") testId="tab-members"
-                      text "Members"
-                    button role="radio" aria-checked=(groupTab == "activity") press=setGroupTab("activity") testId="tab-activity"
-                      text "Activity"
                 if groupTab == "expenses"
                   section
                     header
@@ -524,6 +514,15 @@ component Tally
                         text "Nothing has happened yet." color="text.secondary"
                     for a in detail.activity key=a.id
                       ActivityRow(activity=a)
+              row role="tablist" aria-label="Group sections" testId="group-tabs"
+                button role="tab" aria-selected=(groupTab == "expenses") press=setGroupTab("expenses") testId="tab-expenses" flex=1
+                  text "Expenses"
+                button role="tab" aria-selected=(groupTab == "balances") press=setGroupTab("balances") testId="tab-balances" flex=1
+                  text "Balances"
+                button role="tab" aria-selected=(groupTab == "members") press=setGroupTab("members") testId="tab-members" flex=1
+                  text "Members"
+                button role="tab" aria-selected=(groupTab == "activity") press=setGroupTab("activity") testId="tab-activity" flex=1
+                  text "Activity"
 
         if e.name == "add"
           column navigationKey=`${e.id}`
