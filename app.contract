@@ -56,6 +56,7 @@ component Tally
   state authError = ""
   state groupName = ""
   state groupCurrency = "PKR"
+  state groupTab = "expenses"
   state joinCode = ""
   state formDescription = ""
   state formAmount = ""
@@ -194,6 +195,8 @@ component Tally
     groupName = v
   action setGroupCurrency(v: string)
     groupCurrency = v
+  action setGroupTab(v: string)
+    groupTab = v
   action openNewGroup
     groupName = ""
     groupCurrency = "PKR"
@@ -387,7 +390,7 @@ component Tally
             inset=0
             display="flex"
             flex-direction="column"
-            header
+            header display="flex" align-items="center" gap="space.sm"
               text "Tally" role="heading" aria-level=1 flex=1
               button popovertarget="account-menu" aria-label="Account" testId="account"
                 image "symbol:person"
@@ -443,7 +446,7 @@ component Tally
             inset=0
             display="flex"
             flex-direction="column"
-            header
+            header display="flex" align-items="center" gap="space.sm"
               text (detail.name == "" ? "Group" : detail.name) role="heading"
                 aria-level=2
                 flex=1
@@ -476,37 +479,51 @@ component Tally
                     onAdd=openAdd
                   )
                 section
-                  header
-                    text "Expenses"
-                  if detail.expenses.length == 0
-                    row
-                      column gap="space.xs"
-                        text "No expenses yet"
-                        text "Add the first one to start the ledger." font="-exact-footnote"
-                          color="text.secondary"
-                  for x, i in detail.expenses key=x.id
-                    ExpenseRow(expense=x, isFirst=(i == 0), onEdit=beginEdit(x.id))
-                section
-                  header
-                    text "Balances"
-                  if detail.balances.length == 0
-                    row
-                      text "Everyone is settled up."
-                  for b in detail.balances key=b.id
-                    BalanceRow(balance=b, currency=detail.currency)
-                section
-                  header
-                    text "Members"
-                  for m in detail.members key=m.id
-                    MemberRow(member=m)
-                section
-                  header
-                    text "Activity"
-                  if detail.activity.length == 0
-                    row
-                      text "Nothing has happened yet." color="text.secondary"
-                  for a in detail.activity key=a.id
-                    ActivityRow(activity=a)
+                  row role="radiogroup" aria-label="Group sections" gap="space.xs"
+                    button role="radio" aria-checked=(groupTab == "expenses") press=setGroupTab("expenses") testId="tab-expenses"
+                      text "Expenses"
+                    button role="radio" aria-checked=(groupTab == "balances") press=setGroupTab("balances") testId="tab-balances"
+                      text "Balances"
+                    button role="radio" aria-checked=(groupTab == "members") press=setGroupTab("members") testId="tab-members"
+                      text "Members"
+                    button role="radio" aria-checked=(groupTab == "activity") press=setGroupTab("activity") testId="tab-activity"
+                      text "Activity"
+                if groupTab == "expenses"
+                  section
+                    header
+                      text "Expenses"
+                    if detail.expenses.length == 0
+                      row
+                        column gap="space.xs"
+                          text "No expenses yet"
+                          text "Add the first one to start the ledger." font="-exact-footnote"
+                            color="text.secondary"
+                    for x, i in detail.expenses key=x.id
+                      ExpenseRow(expense=x, isFirst=(i == 0), onEdit=beginEdit(x.id))
+                if groupTab == "balances"
+                  section
+                    header
+                      text "Balances"
+                    if detail.balances.length == 0
+                      row
+                        text "Everyone is settled up."
+                    for b in detail.balances key=b.id
+                      BalanceRow(balance=b, currency=detail.currency)
+                if groupTab == "members"
+                  section
+                    header
+                      text "Members"
+                    for m in detail.members key=m.id
+                      MemberRow(member=m)
+                if groupTab == "activity"
+                  section
+                    header
+                      text "Activity"
+                    if detail.activity.length == 0
+                      row
+                        text "Nothing has happened yet." color="text.secondary"
+                    for a in detail.activity key=a.id
+                      ActivityRow(activity=a)
 
         if e.name == "add"
           column navigationKey=`${e.id}`
