@@ -20,7 +20,7 @@ component AccountMenu
           text "Leave demo"
       else if boot.signedIn
         row
-          column gap=2
+          column gap="space.xxs"
             text boot.name
             text boot.email font="-exact-footnote" color="text.secondary"
         button press=onSync

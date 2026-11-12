@@ -5,13 +5,13 @@ component NewGroupFields
     onName: action
     onCurrency: action
   view
-    column padding=20 gap=16 box-sizing="border-box"
+    column padding="space.xl" gap="space.lg" box-sizing="border-box"
       input value=name
         input=onName
         placeholder="Group name"
         aria-label="Group name"
         testId="group-name"
-      column gap=6
+      column gap="space.xs"
         text "Currency" font="-exact-footnote" color="text.secondary"
         select value=currency
           change=onCurrency

@@ -22,13 +22,13 @@ component ExpenseForm
     onSelectAll: action
     onDelete: action
   view
-    column padding=20 gap=16 box-sizing="border-box"
+    column padding="space.xl" gap="space.lg" box-sizing="border-box"
       input value=description
         input=onDescription
         placeholder="What was it for?"
         aria-label="Description"
         testId="expense-description"
-      row gap=8 align-items="center"
+      row gap="space.sm" align-items="center"
         input type="number"
           inputmode="decimal"
           value=amount
@@ -44,12 +44,12 @@ component ExpenseForm
         change=onDate
         aria-label="Date"
         testId="expense-date"
-      column gap=6
+      column gap="space.xs"
         text "Paid by" font="-exact-footnote" color="text.secondary"
         select value=payer change=onPayer aria-label="Paid by" testId="expense-payer"
           for m in members key=m.id
             option m.name value=m.id
-      column gap=8
+      column gap="space.sm"
         row
           text "Split between" font="-exact-footnote"
             color="text.secondary"

@@ -8,11 +8,11 @@ component ExpenseRow
     onEdit: action
   view
     row testId=`expense-${expense.id}`
-      column flex=1 min-width=0 gap=2
+      column flex=1 min-width=0 gap="space.xxs"
         text expense.description
         text `${expense.payerName} paid · ${expense.dateLabel}` font="-exact-footnote"
           color="text.secondary"
-      column align-items="flex-end" gap=2
+      column align-items="flex-end" gap="space.xxs"
         text money(expense.amount, expense.currency) font-variant-numeric="tabular-nums"
           testId=`expense-amount-${expense.id}`
         text `${expense.participantCount} ${expense.participantCount == 1 ? "person" : "people"}` font="-exact-caption2"

@@ -9,7 +9,7 @@ component TransferRow
     onPay: action
   view
     row testId=`transfer-${transfer.fromId}-${transfer.toId}`
-      column flex=1 min-width=0 gap=2
+      column flex=1 min-width=0 gap="space.xxs"
         text `${transfer.fromName} pays ${transfer.toName}`
         text money(transfer.amount, currency) font-weight=600
           font-variant-numeric="tabular-nums"

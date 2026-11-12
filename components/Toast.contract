@@ -8,10 +8,10 @@ component Toast
       bottom=16
       left=16
       right=16
-      padding=12
-      gap=12
+      padding="space.md"
+      gap="space.md"
       background-color="surface.grouped"
-      border-radius=8
+      border-radius="radius.md"
       testId="toast"
       text message color="text.primary" flex=1
       button press=onDismiss testId="dismiss-toast"

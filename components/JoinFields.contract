@@ -3,7 +3,7 @@ component JoinFields
     code: string
     onCode: action
   view
-    column padding=20 gap=16 box-sizing="border-box"
+    column padding="space.xl" gap="space.lg" box-sizing="border-box"
       input value=code
         input=onCode
         placeholder="Invite code"

@@ -5,7 +5,7 @@ component ActivityRow
     activity: Activity
   view
     row
-      column flex=1 min-width=0 gap=2
+      column flex=1 min-width=0 gap="space.xxs"
         text activity.message
         text `${activity.actorName} · ${activity.when}` font="-exact-footnote"
           color="text.secondary"

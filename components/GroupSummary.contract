@@ -8,23 +8,23 @@ component GroupSummary
     onSettle: action
     onAdd: action
   view
-    column padding=16
-      gap=10
+    column padding="space.lg"
+      gap="space.md"
       background-color="surface.grouped"
-      border-radius=16
+      border-radius="radius.lg"
       testId="group-summary"
       row
-        column flex=1 gap=2
+        column flex=1 gap="space.xxs"
           text "Your balance" font="-exact-footnote" color="text.secondary"
           text netText(detail.myNet, detail.currency) role="heading"
             aria-level=3
             testId="my-balance"
-        column align-items="flex-end" gap=2
+        column align-items="flex-end" gap="space.xxs"
           text `${detail.expenseCount} ${detail.expenseCount == 1 ? "expense" : "expenses"}` font="-exact-footnote"
             color="text.secondary"
             testId="expense-count"
           text detail.currency font="-exact-caption1" color="text.secondary"
-      row gap=8
+      row gap="space.sm"
         button press=onSettle
           buttonStyle="filled"
           disabled=(not canSettle)

@@ -13,17 +13,17 @@ component GroupsList
         text "Groups"
       if groups.length == 0
         row
-          column flex=1 gap=4
+          column flex=1 gap="space.xs"
             text "No groups yet"
             text "Create one or join with an invite code." font="-exact-footnote"
               color="text.secondary"
       for g in groups key=g.id
         link href=`/group/${g.id}` testId=`group-${g.id}`
-          column flex=1 min-width=0 gap=2
+          column flex=1 min-width=0 gap="space.xxs"
             text g.name
             text `${g.memberCount} ${g.memberCount == 1 ? "member" : "members"} · ${g.expenseCount} ${g.expenseCount == 1 ? "expense" : "expenses"}` font="-exact-footnote"
               color="text.secondary"
-          column align-items="flex-end" gap=2
+          column align-items="flex-end" gap="space.xxs"
             text (g.myNet > 0 ? "Owed to you" : g.myNet < 0 ? "You owe" : "Settled") font="-exact-caption1"
               color="text.secondary"
             text (g.myNet == 0 ? "" : money(abs(g.myNet), g.currency)) font-weight=600

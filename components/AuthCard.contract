@@ -13,9 +13,9 @@ component AuthCard
     onToggleMode: action
   view
     column background-color="surface.card"
-      border-radius=20
-      padding=20
-      gap=12
+      border-radius="radius.lg"
+      padding="space.xl"
+      gap="space.md"
       width="100%"
       box-sizing="border-box"
       text (mode == "signin" ? "Sign in to sync" : "Create your account") role="heading"

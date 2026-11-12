@@ -8,17 +8,17 @@ component SettleContent
     onPay: action
   view
     section
-      column padding=16
-        gap=4
+      column padding="space.lg"
+        gap="space.xs"
         background-color="surface.card"
-        border-radius=16
+        border-radius="radius.lg"
         text "Suggested payments" role="heading" aria-level=3
         text "The fewest transfers that clear every balance." font="-exact-footnote"
           color="text.secondary"
     if detail.transfers.length == 0
       section
         row
-          column gap=4
+          column gap="space.xs"
             text "Everyone is settled up"
             text "No payments are needed right now." font="-exact-footnote"
               color="text.secondary"

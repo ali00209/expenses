@@ -396,8 +396,8 @@ component Tally
                 progress aria-label="Loading"
             else if not boot.signedIn and not boot.demo
               scroll id="home-scroll" flex=1 min-height=0
-                column padding=24 gap=18 align-items="center"
-                  column gap=6 align-items="center"
+                column padding="space.xl" gap="space.lg" align-items="center"
+                  column gap="space.xs" align-items="center"
                     text "Welcome" role="heading" aria-level=2 font="-exact-large-title"
                     text "Split expenses with friends. Every change is saved on this device first." text-align="center"
                       color="text.secondary"
@@ -453,7 +453,7 @@ component Tally
               button popovertarget="group-menu" aria-label="Group options" testId="group-menu"
                 image "symbol:more"
             if detail.id == ""
-              column flex=1 justify-content="center" align-items="center" gap=8
+              column flex=1 justify-content="center" align-items="center" gap="space.sm"
                 if pending(detail)
                   progress aria-label="Loading group"
                 else
@@ -480,7 +480,7 @@ component Tally
                     text "Expenses"
                   if detail.expenses.length == 0
                     row
-                      column gap=4
+                      column gap="space.xs"
                         text "No expenses yet"
                         text "Add the first one to start the ledger." font="-exact-footnote"
                           color="text.secondary"
@@ -517,7 +517,7 @@ component Tally
             inset=0
             background-color="surface.page"
             testId="expense-form"
-            header display="flex" align-items="center" gap=8
+            header display="flex" align-items="center" gap="space.sm"
               button press=goBack testId="cancel-expense"
                 text "Cancel"
               text "Add expense" role="heading" aria-level=2 flex=1
@@ -557,7 +557,7 @@ component Tally
             inset=0
             background-color="surface.page"
             testId="expense-form"
-            header display="flex" align-items="center" gap=8
+            header display="flex" align-items="center" gap="space.sm"
               button press=goBack testId="cancel-expense"
                 text "Cancel"
               text "Edit expense" role="heading" aria-level=2 flex=1
@@ -596,7 +596,7 @@ component Tally
             inset=0
             background-color="surface.page"
             testId="settle-sheet"
-            header display="flex" align-items="center" gap=8
+            header display="flex" align-items="center" gap="space.sm"
               button press=goBack testId="close-settle"
                 text "Done"
               text "Settle up" role="heading" aria-level=2 flex=1
@@ -616,7 +616,7 @@ component Tally
             inset=0
             background-color="surface.page"
             testId="new-group-form"
-            header display="flex" align-items="center" gap=8
+            header display="flex" align-items="center" gap="space.sm"
               button press=goBack testId="cancel-new-group"
                 text "Cancel"
               text "New group" role="heading" aria-level=2 flex=1
@@ -642,7 +642,7 @@ component Tally
             inset=0
             background-color="surface.page"
             testId="join-form"
-            header display="flex" align-items="center" gap=8
+            header display="flex" align-items="center" gap="space.sm"
               button press=goBack testId="cancel-join"
                 text "Cancel"
               text "Join a group" role="heading" aria-level=2 flex=1
@@ -663,7 +663,7 @@ component Tally
             inset=0
             background-color="surface.page"
             testId="member-form"
-            header display="flex" align-items="center" gap=8
+            header display="flex" align-items="center" gap="space.sm"
               button press=goBack testId="cancel-member"
                 text "Cancel"
               text "Add member" role="heading" aria-level=2 flex=1
@@ -688,7 +688,7 @@ component Tally
             inset=0
             background-color="surface.page"
             testId="sync-sheet"
-            header display="flex" align-items="center" gap=8
+            header display="flex" align-items="center" gap="space.sm"
               button press=goBack testId="close-sync"
                 text "Done"
               text "Sync" role="heading" aria-level=2 flex=1
